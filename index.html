@@ -18,7 +18,7 @@
             height: 100%;
             overflow: hidden;
             background-color: #000;
-            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
         }
 
         #game-container {
@@ -54,7 +54,7 @@
 </div>
 
 <script>
-// --- AUDIO SYNTHESIZER (Web Audio API) ---
+// --- SOUND ENGINE (Web Audio API) ---
 class SoundEffects {
     constructor() {
         this.ctx = null;
@@ -134,7 +134,7 @@ class SoundEffects {
 
 const sounds = new SoundEffects();
 
-// --- GAME CONFIG & CONSTANTS ---
+// --- CONFIG & CONSTANTS ---
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 const touchZone = document.getElementById('touchZone');
@@ -213,8 +213,8 @@ const LEVELS = [
         colorTheme: "#ff0033",
         colorSecondary: "#ff6688",
         speed: 10,
-        length: 38000, // Long map
-        gapHeight: 280, // Extended corridor space
+        length: 38000,
+        gapHeight: 280,
         generateTerrain: function() {
             return generateLevelMap(3, this.length, this.gapHeight);
         }
@@ -243,7 +243,6 @@ function generateLevelMap(levelNum, totalLength, baseGap) {
                 terrain.push({ x1: x, y1: currentY, x2: x + segLen, y2: currentY, gap: gap });
             }
             
-            // Ceiling and Floor Spikes
             if (Math.random() < 0.65) {
                 spikes.push({
                     x: x + segLen * 0.4,
@@ -259,7 +258,6 @@ function generateLevelMap(levelNum, totalLength, baseGap) {
                 });
             }
             
-            // Spinning Sawblades
             if (Math.random() < 0.5) {
                 sawblades.push({
                     x: x + segLen * 0.5,
@@ -291,7 +289,7 @@ function generateLevelMap(levelNum, totalLength, baseGap) {
     return { terrain, spikes, sawblades };
 }
 
-// Wave Physics
+// Exact 45-degree Wave Physics
 const wave = {
     x: 220,
     y: GAME_HEIGHT / 2,
@@ -309,7 +307,7 @@ const wave = {
     },
 
     update(speed) {
-        // Precise 45-degree angle diagonal movement: vy = speed
+        // vy = speed => Exact 45° angle physics
         const vy = isHolding ? -speed : speed;
         this.y += vy;
         this.angle = isHolding ? -Math.PI / 4 : Math.PI / 4;
@@ -338,7 +336,6 @@ const wave = {
     },
 
     draw(ctx) {
-        // Zigzag Trail
         if (this.trail.length > 1) {
             ctx.save();
             ctx.beginPath();
@@ -356,7 +353,6 @@ const wave = {
             ctx.restore();
         }
 
-        // Particles
         this.particles.forEach(p => {
             ctx.save();
             ctx.globalAlpha = p.life;
@@ -365,7 +361,6 @@ const wave = {
             ctx.restore();
         });
 
-        // Wave Dart Icon
         ctx.save();
         ctx.translate(this.x, this.y);
         ctx.rotate(this.angle);
@@ -653,7 +648,6 @@ function renderMainMenu() {
     ctx.fillText('TRY ME!', GAME_WIDTH / 2 + 160, 235);
     ctx.strokeText('TRY ME!', GAME_WIDTH / 2 + 160, 235);
 
-    // Single Center Play Button
     const cx = GAME_WIDTH / 2;
     const cy = GAME_HEIGHT / 2 + 50;
     
