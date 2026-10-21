@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Geometry Dash - Wave Edition</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Russo+One&display=swap" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #000;
+            color: #fff;
+            font-family: 'Russo One', 'Fredoka One', sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+            overflow: hidden;
+        }
+
+        /* GD Style Text & Outline */
+        .gd-title {
+            font-family: 'Fredoka One', cursive;
+            color: #55ff55;
+            text-shadow: 
+                3px 3px 0px #000,
+                -3px -3px 0px #000,
+                3px -3px 0px #000,
+                -3px 3px 0px #000,
+                0px 4px 0px #000;
+            letter-spacing: 2px;
+        }
+
+        .gd-text-yellow {
+            color: #ffeb3b;
+            text-shadow: 
+                2px 2px 0px #000,
+                -2px -2px 0px #000,
+                2px -2px 0px #000,
+                -2px 2px 0px #000;
+        }
+
+        /* Animated Pulsing effect */
+        @keyframes pulse-subtle {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        .animate-pulse-subtle {
+            animation: pulse-subtle 1.8s infinite ease-in-out;
+        }
+
+        /* Countdown text animation */
+        @keyframes countdown-pop {
+            0% { transform: scale(2); opacity: 0; }
+            30% { transform: scale(1); opacity: 1; }
+            80% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(0.6); opacity: 0; }
+        }
+        .animate-countdown {
+            animation: countdown-pop 0.9s ease-out forwards;
+        }
+
+        /* Custom GD Button styling */
+        .gd-btn {
+            background: linear-gradient(180deg, #32cd32 0%, #1e8b1e 100%);
+            border: 4px solid #ffffff;
+            box-shadow: 0 6px 0 #0f4f0f, 0 10px 15px rgba(0,0,0,0.5);
+            transition: transform 0.1s, box-shadow 0.1s;
+        }
+        .gd-btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 #0f4f0f, 0 5px 10px rgba(0,0,0,0.5);
+        }
+
+        /* Level Card Style */
+        .level-card {
+            background: rgba(0, 0, 0, 0.6);
+            border: 3px solid rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(5px);
+            transition: all 0.2s ease;
+        }
+        .level-card:hover {
+            transform: scale(1.05);
+            border-color: #55ff55;
+        }
+
+        canvas {
+            display: block;
+            width: 100vw;
+            height: 100vh;
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen">
+
+    <!-- Canvas Container -->
+    <div id="game-container" class="relative w-full h-full">
+        <canvas id="gameCanvas"></canvas>
+
+        <!-- MAIN MENU OVERLAY -->
+        <div id="main-menu" class="absolute inset-0 flex flex-col items-center justify-between p-6 z-20 bg-blue-900/40">
+            <!-- Header Logo -->
+            <div class="mt-8 text-center flex flex-col items-center select-none">
+                <h1 class="gd-title text-4xl sm:text-6xl md:text-7xl font-extrabold uppercase tracking-widest text-emerald-400">
+                    GEOMETRY DASH
+                </h1>
+                <div class="gd-text-yellow text-xl sm:text-2xl mt-1 tracking-wider font-bold animate-pulse-subtle">
+                    TRY ME!
+                </div>
+            </div>
+
+            <!-- Central Play Button (Exact UI match) -->
+            <div class="my-auto">
+                <button id="btn-main-play" class="gd-btn w-28 h-28 sm:w-36 sm:h-36 rounded-2xl flex items-center justify-center relative cursor-pointer group">
+                    <div class="w-16 h-16 sm:w-20 sm:h-20 bg-yellow-400 rounded-lg flex items-center justify-center border-2 border-black shadow-inner group-hover:scale-105 transition-transform">
+                        <svg class="w-10 h-10 sm:w-12 sm:h-12 text-black fill-current ml-1" viewBox="0 0 24 24">
+                            <path d="M8 5v14l11-7z"/>
+                        </svg>
+                    </div>
+                </button>
+            </div>
+
+            <!-- Footer Info -->
+            <div class="text-xs sm:text-sm text-gray-300 opacity-80 mb-2">
+                Chế độ duy nhất: <span class="text-yellow-300 font-bold">WAVE MODE</span>
+            </div>
+        </div>
+
+        <!-- LEVEL SELECT OVERLAY -->
+        <div id="level-select" class="absolute inset-0 hidden flex-col items-center justify-center p-6 z-20 bg-black/80 backdrop-blur-md">
+            <h2 class="gd-title text-3xl sm:text-5xl mb-8 text-yellow-400 uppercase">CHỌN MÀN CHƠI</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl w-full px-4">
+                <!-- Level 1: Dễ -->
+                <div onclick="selectLevel(1)" class="level-card rounded-2xl p-6 text-center cursor-pointer flex flex-col items-center border-cyan-400/50 hover:border-cyan-400 shadow-lg shadow-cyan-950/50">
+                    <div class="w-16 h-16 rounded-full bg-cyan-500/20 flex items-center justify-center mb-4 border-2 border-cyan-400">
+                        <span class="text-cyan-300 text-2xl font-bold">1</span>
+                    </div>
+                    <h3 class="text-2xl font-bold text-cyan-400 mb-2">DỄ</h3>
+                    <p class="text-xs text-gray-300 mb-4">Địa hình rộng rãi, tốc độ vừa phải. Thích hợp để làm quen.</p>
+                    <div class="mt-auto px-4 py-2 bg-cyan-600 hover:bg-cyan-500 rounded-xl text-white font-bold w-full">BẮT ĐẦU</div>
+                </div>
+
+                <!-- Level 2: Trung Bình -->
+                <div onclick="selectLevel(2)" class="level-card rounded-2xl p-6 text-center cursor-pointer flex flex-col items-center border-purple-400/50 hover:border-purple-400 shadow-lg shadow-purple-950/50">
+                    <div class="w-16 h-16 rounded-full bg-purple-500/20 flex items-center justify-center mb-4 border-2 border-purple-400">
+                        <span class="text-purple-300 text-2xl font-bold">2</span>
+                    </div>
+                    <h3 class="text-2xl font-bold text-purple-400 mb-2">TRUNG BÌNH</h3>
+                    <p class="text-xs text-gray-300 mb-4">Hành lang hẹp hơn, chướng ngại vật xuất hiện dồn dập.</p>
+                    <div class="mt-auto px-4 py-2 bg-purple-600 hover:bg-purple-500 rounded-xl text-white font-bold w-full">BẮT ĐẦU</div>
+                </div>
+
+                <!-- Level 3: Khó -->
+                <div onclick="selectLevel(3)" class="level-card rounded-2xl p-6 text-center cursor-pointer flex flex-col items-center border-red-500/50 hover:border-red-500 shadow-lg shadow-red-950/50">
+                    <div class="w-16 h-16 rounded-full bg-red-500/20 flex items-center justify-center mb-4 border-2 border-red-500">
+                        <span class="text-red-400 text-2xl font-bold">3</span>
+                    </div>
+                    <h3 class="text-2xl font-bold text-red-500 mb-2">KHÓ</h3>
+                    <p class="text-xs text-gray-300 mb-4">Khe hẹp cực nhỏ, tốc độ rất nhanh. Yêu cầu phản xạ cực cao!</p>
+                    <div class="mt-auto px-4 py-2 bg-red-600 hover:bg-red-500 rounded-xl text-white font-bold w-full">BẮT ĐẦU</div>
+                </div>
+            </div>
+
+            <button id="btn-back-main" class="mt-8 px-6 py-2 bg-gray-700 hover:bg-gray-600 rounded-xl font-bold border border-gray-400">QUAY LẠI</button>
+        </div>
+
+        <!-- COUNTDOWN OVERLAY -->
+        <div id="countdown-overlay" class="absolute inset-0 hidden pointer-events-none flex items-center justify-center z-20">
+            <span id="countdown-text" class="text-7xl sm:text-9xl font-extrabold gd-text-yellow drop-shadow-2xl">3</span>
+        </div>
+
+        <!-- GAME HUD (Progress & Level Info) -->
+        <div id="game-hud" class="absolute top-0 left-0 right-0 p-4 hidden pointer-events-none flex flex-col items-center z-10">
+            <div class="w-full max-w-md bg-black/50 border border-white/30 rounded-full h-6 p-1 backdrop-blur-sm relative overflow-hidden">
+                <div id="progress-bar" class="h-full bg-gradient-to-r from-green-400 to-emerald-300 rounded-full w-0 transition-all duration-75"></div>
+                <span id="progress-text" class="absolute inset-0 flex items-center justify-center text-xs font-bold drop-shadow">0%</span>
+            </div>
+            <div id="hud-level-name" class="text-xs tracking-widest text-white/70 mt-1 uppercase">Màn 1: Dễ</div>
+        </div>
+
+        <!-- GAME OVER / COMPLETE DIALOG -->
+        <div id="game-modal" class="absolute inset-0 hidden flex-col items-center justify-center p-6 z-30 bg-black/70 backdrop-blur-sm">
+            <div class="bg-gray-900 border-2 border-white/40 rounded-2xl p-8 max-w-sm w-full text-center shadow-2xl">
+                <h2 id="modal-title" class="text-4xl font-extrabold mb-2 gd-title">THẮNG RỒI!</h2>
+                <p id="modal-desc" class="text-gray-300 text-sm mb-6">Bạn đã hoàn thành màn chơi thành công!</p>
+                <div class="flex flex-col gap-3">
+                    <button id="btn-restart" class="px-6 py-3 bg-emerald-600 hover:bg-emerald-500 rounded-xl font-bold text-white shadow-lg">THỬ LẠI</button>
+                    <button id="btn-menu" class="px-6 py-3 bg-gray-700 hover:bg-gray-600 rounded-xl font-bold text-gray-200">DANH SÁCH MÀN</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /**
+         * GEOMETRY DASH WAVE GAME - AUDIO SYSTEM
+         * Web Audio API Synthesizer for Arcade Sounds
+         */
+        const AudioSys = {
+            ctx: null,
+            init() {
+                if (!this.ctx) {
+                    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+            },
+            playClick() {
+                if (!this.ctx) return;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(400, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(800, this.ctx.currentTime + 0.08);
+                gain.gain.setValueAtTime(0.3, this.ctx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.08);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.08);
+            },
+            playBeep(isFinal = false) {
+                if (!this.ctx) return;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sine';
+                const freq = isFinal ? 880 : 440;
+                osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+                gain.gain.setValueAtTime(0.3, this.ctx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.15);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.15);
+            },
+            playCrash() {
+                if (!this.ctx) return;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(150, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(30, this.ctx.currentTime + 0.3);
+                gain.gain.setValueAtTime(0.5, this.ctx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.3);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.3);
+            },
+            playWin() {
+                if (!this.ctx) return;
+                const now = this.ctx.currentTime;
+                [440, 554.37, 659.25, 880].forEach((freq, idx) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(freq, now + idx * 0.1);
+                    gain.gain.setValueAtTime(0.3, now + idx * 0.1);
+                    gain.gain.linearRampToValueAtTime(0.01, now + idx * 0.1 + 0.2);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(now + idx * 0.1);
+                    osc.stop(now + idx * 0.1 + 0.2);
+                });
+            }
+        };
+
+        /**
+         * LEVEL CONFIGURATIONS
+         * Defines theme colors, corridor gap height, speeds, and level terrain layouts
+         */
+        const LEVEL_CONFIGS = {
+            1: {
+                name: "Dễ (Easy)",
+                themeColor: "#00bfff", // Cyan/Blue
+                bgGradient: ["#001128", "#002b55"],
+                gridColor: "rgba(0, 191, 255, 0.15)",
+                speed: 6.5,
+                corridorGap: 260, // Wide gap
+                length: 22000,
+                waveColor: "#00ffff"
+            },
+            2: {
+                name: "Trung Bình (Medium)",
+                themeColor: "#a855f7", // Purple
+                bgGradient: ["#1e002e", "#3b0058"],
+                gridColor: "rgba(168, 85, 247, 0.15)",
+                speed: 8.5,
+                corridorGap: 190, // Medium gap
+                length: 26000,
+                waveColor: "#e085ff"
+            },
+            3: {
+                name: "Khó (Hard)",
+                themeColor: "#ef4444", // Crimson Red
+                bgGradient: ["#2b0000", "#520000"],
+                gridColor: "rgba(239, 68, 68, 0.2)",
+                speed: 10.5,
+                corridorGap: 135, // Tight gap
+                length: 30000,
+                waveColor: "#ff4d4d"
+            }
+        };
+
+        // DOM Elements
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+        const mainMenu = document.getElementById("main-menu");
+        const levelSelect = document.getElementById("level-select");
+        const gameHud = document.getElementById("game-hud");
+        const gameModal = document.getElementById("game-modal");
+        const progressBar = document.getElementById("progress-bar");
+        const progressText = document.getElementById("progress-text");
+        const hudLevelName = document.getElementById("hud-level-name");
+        const countdownOverlay = document.getElementById("countdown-overlay");
+        const countdownText = document.getElementById("countdown-text");
+
+        // Game State Variables
+        let gameState = "MENU"; // "MENU", "LEVEL_SELECT", "COUNTDOWN", "PLAYING", "GAMEOVER", "WIN"
+        let currentLevel = 1;
+        let config = LEVEL_CONFIGS[1];
+        let isHolding = false;
+        let animationFrameId = null;
+        let countdownTimer = null;
+
+        // Player & Environment Properties
+        let player = {
+            x: 0,
+            y: 0,
+            size: 16,
+            trail: []
+        };
+        let cameraX = 0;
+        let terrainSegments = [];
+        let sawblades = [];
+
+        // Window Resize Handling
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener("resize", resizeCanvas);
+        resizeCanvas();
+
+        /**
+         * LEVEL GENERATOR
+         */
+        function generateLevel(levelNum) {
+            config = LEVEL_CONFIGS[levelNum];
+            terrainSegments = [];
+            sawblades = [];
+
+            const totalLength = config.length;
+            const segmentWidth = 150;
+            const numSegments = Math.ceil(totalLength / segmentWidth);
+            
+            const centerY = canvas.height / 2;
+            let currentCenter = centerY;
+            const halfGap = config.corridorGap / 2;
+
+            // Generate initial flat buffer zone
+            for (let i = 0; i < 5; i++) {
+                terrainSegments.push({
+                    x: i * segmentWidth,
+                    topY: currentCenter - halfGap,
+                    bottomY: currentCenter + halfGap
+                });
+            }
+
+            // Generate dynamic corridor terrain
+            for (let i = 5; i < numSegments; i++) {
+                const posX = i * segmentWidth;
+
+                const maxShift = (levelNum === 3) ? 120 : (levelNum === 2 ? 90 : 60);
+                const shift = (Math.random() - 0.5) * maxShift;
+                currentCenter += shift;
+
+                const margin = halfGap + 80;
+                currentCenter = Math.max(margin, Math.min(canvas.height - margin, currentCenter));
+
+                terrainSegments.push({
+                    x: posX,
+                    topY: currentCenter - halfGap,
+                    bottomY: currentCenter + halfGap
+                });
+
+                // Generate Sawblades inside corridor
+                if (i > 8 && i < numSegments - 5) {
+                    const sawChance = levelNum === 3 ? 0.6 : (levelNum === 2 ? 0.4 : 0.2);
+                    if (Math.random() < sawChance) {
+                        const isTop = Math.random() < 0.5;
+                        sawblades.push({
+                            x: posX + segmentWidth / 2,
+                            y: isTop ? (currentCenter - halfGap + 30) : (currentCenter + halfGap - 30),
+                            radius: levelNum === 3 ? 24 : 20,
+                            angle: 0
+                        });
+                    }
+                }
+            }
+        }
+
+        /**
+         * RESET & START COUNTDOWN BEFORE PLAYING
+         */
+        function prepareGame(levelNum) {
+            AudioSys.init();
+            currentLevel = levelNum;
+            generateLevel(levelNum);
+
+            player.x = 200;
+            player.y = canvas.height / 2;
+            player.trail = [];
+
+            cameraX = 0;
+            isHolding = false;
+
+            // Hide menus, show HUD
+            mainMenu.classList.add("hidden");
+            levelSelect.classList.add("hidden");
+            gameModal.classList.add("hidden");
+            gameHud.classList.remove("hidden");
+
+            hudLevelName.innerText = `MÀN ${levelNum}: ${config.name}`;
+            hudLevelName.style.color = config.themeColor;
+            progressBar.style.width = "0%";
+            progressText.innerText = "0%";
+
+            if (animationFrameId) cancelAnimationFrame(animationFrameId);
+            if (countdownTimer) clearInterval(countdownTimer);
+
+            startCountdown();
+        }
+
+        /**
+         * 3-SECOND COUNTDOWN LOGIC (3 -> 2 -> 1 -> GO!)
+         */
+        function startCountdown() {
+            gameState = "COUNTDOWN";
+            countdownOverlay.classList.remove("hidden");
+
+            let count = 3;
+            triggerCountdownAnimation(count);
+
+            countdownTimer = setInterval(() => {
+                count--;
+                if (count > 0) {
+                    triggerCountdownAnimation(count);
+                } else if (count === 0) {
+                    triggerCountdownAnimation("GO!");
+                } else {
+                    clearInterval(countdownTimer);
+                    countdownOverlay.classList.add("hidden");
+                    gameState = "PLAYING";
+                    gameLoop();
+                }
+            }, 900);
+
+            // Render scene while stationary during countdown
+            render();
+        }
+
+        function triggerCountdownAnimation(text) {
+            countdownText.innerText = text;
+            countdownText.classList.remove("animate-countdown");
+            void countdownText.offsetWidth; // Force reflow
+            countdownText.classList.add("animate-countdown");
+            
+            AudioSys.playBeep(text === "GO!");
+        }
+
+        /**
+         * INPUT LISTENERS
+         */
+        function handleInputStart(e) {
+            if (e.target.closest('button') || e.target.closest('.level-card')) return;
+            if (gameState === "PLAYING") {
+                isHolding = true;
+            }
+        }
+
+        function handleInputEnd() {
+            isHolding = false;
+        }
+
+        window.addEventListener("mousedown", handleInputStart);
+        window.addEventListener("mouseup", handleInputEnd);
+        window.addEventListener("touchstart", (e) => { handleInputStart(e); }, { passive: true });
+        window.addEventListener("touchend", handleInputEnd);
+
+        window.addEventListener("keydown", (e) => {
+            if (e.code === "Space" || e.code === "ArrowUp") {
+                if (gameState === "PLAYING") isHolding = true;
+            }
+        });
+        window.addEventListener("keyup", (e) => {
+            if (e.code === "Space" || e.code === "ArrowUp") {
+                isHolding = false;
+            }
+        });
+
+        /**
+         * COLLISION DETECTION LOGIC
+         */
+        function checkCollisions() {
+            const segmentWidth = 150;
+            const index = Math.floor(player.x / segmentWidth);
+
+            if (index >= 0 && index < terrainSegments.length - 1) {
+                const segA = terrainSegments[index];
+                const segB = terrainSegments[index + 1];
+
+                const factor = (player.x - segA.x) / segmentWidth;
+                const topLimitY = segA.topY + (segB.topY - segA.topY) * factor;
+                const bottomLimitY = segA.bottomY + (segB.bottomY - segA.bottomY) * factor;
+
+                if (player.y - player.size / 2 <= topLimitY || player.y + player.size / 2 >= bottomLimitY) {
+                    return true;
+                }
+            }
+
+            for (let saw of sawblades) {
+                const dx = player.x - saw.x;
+                const dy = player.y - saw.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                if (dist < saw.radius + player.size / 2) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        /**
+         * MAIN GAME LOOP
+         */
+        function gameLoop() {
+            if (gameState !== "PLAYING") return;
+
+            // 1. UPDATE STATE
+            player.x += config.speed;
+            const dy = config.speed * (isHolding ? -1 : 1); // Up 45° or Down 45°
+            player.y += dy;
+
+            cameraX = player.x - 200;
+
+            player.trail.unshift({ x: player.x, y: player.y });
+            if (player.trail.length > 35) player.trail.pop();
+
+            const progress = Math.min(100, Math.floor((player.x / config.length) * 100));
+            progressBar.style.width = `${progress}%`;
+            progressText.innerText = `${progress}%`;
+
+            if (player.x >= config.length) {
+                gameState = "WIN";
+                AudioSys.playWin();
+                showEndModal("CHIẾN THẮNG!", "Bạn đã vượt qua màn chơi xuất sắc!", "THẮNG RỒI!");
+                return;
+            }
+
+            if (checkCollisions()) {
+                gameState = "GAMEOVER";
+                AudioSys.playCrash();
+                showEndModal("THẤT BẠI!", "Bạn đã đâm vào chướng ngại vật.", "THUA RỒI!");
+                return;
+            }
+
+            // 2. RENDER GRAPHICS
+            render();
+
+            animationFrameId = requestAnimationFrame(gameLoop);
+        }
+
+        /**
+         * RENDER GRAPHICS & VISUALS
+         */
+        function render() {
+            // Background Gradient
+            const grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            grad.addColorStop(0, config.bgGradient[0]);
+            grad.addColorStop(1, config.bgGradient[1]);
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.save();
+            ctx.translate(-cameraX, 0);
+
+            // Draw Grid
+            ctx.strokeStyle = config.gridColor;
+            ctx.lineWidth = 1;
+            const gridSize = 60;
+            const startX = Math.floor(cameraX / gridSize) * gridSize;
+            for (let x = startX; x < cameraX + canvas.width + gridSize; x += gridSize) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, canvas.height);
+                ctx.stroke();
+            }
+
+            // Draw Cavern Walls
+            if (terrainSegments.length > 0) {
+                ctx.fillStyle = "#080810";
+                ctx.strokeStyle = config.themeColor;
+                ctx.lineWidth = 4;
+
+                // Top Wall
+                ctx.beginPath();
+                ctx.moveTo(terrainSegments[0].x, 0);
+                for (let seg of terrainSegments) {
+                    ctx.lineTo(seg.x, seg.topY);
+                }
+                ctx.lineTo(terrainSegments[terrainSegments.length - 1].x, 0);
+                ctx.closePath();
+                ctx.fill();
+                ctx.stroke();
+
+                // Bottom Wall
+                ctx.beginPath();
+                ctx.moveTo(terrainSegments[0].x, canvas.height);
+                for (let seg of terrainSegments) {
+                    ctx.lineTo(seg.x, seg.bottomY);
+                }
+                ctx.lineTo(terrainSegments[terrainSegments.length - 1].x, canvas.height);
+                ctx.closePath();
+                ctx.fill();
+                ctx.stroke();
+            }
+
+            // Draw Sawblades
+            sawblades.forEach(saw => {
+                if (saw.x + saw.radius > cameraX && saw.x - saw.radius < cameraX + canvas.width) {
+                    if (gameState === "PLAYING") saw.angle += 0.1;
+                    ctx.save();
+                    ctx.translate(saw.x, saw.y);
+                    ctx.rotate(saw.angle);
+
+                    ctx.fillStyle = "#111";
+                    ctx.strokeStyle = "#ff3333";
+                    ctx.lineWidth = 3;
+                    ctx.beginPath();
+                    const teeth = 10;
+                    for (let i = 0; i < teeth; i++) {
+                        const a = (i / teeth) * Math.PI * 2;
+                        const r1 = saw.radius;
+                        const r2 = saw.radius * 0.6;
+                        ctx.lineTo(Math.cos(a) * r1, Math.sin(a) * r1);
+                        ctx.lineTo(Math.cos(a + 0.3) * r2, Math.sin(a + 0.3) * r2);
+                    }
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.stroke();
+
+                    ctx.beginPath();
+                    ctx.arc(0, 0, saw.radius * 0.3, 0, Math.PI * 2);
+                    ctx.fillStyle = "#fff";
+                    ctx.fill();
+
+                    ctx.restore();
+                }
+            });
+
+            // Draw Wave Trail
+            if (player.trail.length > 1) {
+                ctx.beginPath();
+                ctx.moveTo(player.trail[0].x, player.trail[0].y);
+                for (let i = 1; i < player.trail.length; i++) {
+                    ctx.lineTo(player.trail[i].x, player.trail[i].y);
+                }
+                ctx.strokeStyle = config.waveColor;
+                ctx.lineWidth = 6;
+                ctx.lineCap = "round";
+                ctx.lineJoin = "round";
+                ctx.shadowColor = config.waveColor;
+                ctx.shadowBlur = 12;
+                ctx.stroke();
+                ctx.shadowBlur = 0;
+            }
+
+            // Draw Wave Player Arrow
+            ctx.save();
+            ctx.translate(player.x, player.y);
+            const angle = (gameState === "COUNTDOWN") ? 0 : (isHolding ? -Math.PI / 4 : Math.PI / 4);
+            ctx.rotate(angle);
+
+            ctx.fillStyle = "#ffffff";
+            ctx.strokeStyle = "#000000";
+            ctx.lineWidth = 2;
+
+            ctx.beginPath();
+            ctx.moveTo(14, 0);
+            ctx.lineTo(-10, -10);
+            ctx.lineTo(-4, 0);
+            ctx.lineTo(-10, 10);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.fillStyle = config.waveColor;
+            ctx.beginPath();
+            ctx.moveTo(8, 0);
+            ctx.lineTo(-6, -5);
+            ctx.lineTo(-2, 0);
+            ctx.lineTo(-6, 5);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.restore();
+            ctx.restore();
+        }
+
+        /**
+         * SHOW GAMEOVER / WIN MODAL
+         */
+        function showEndModal(title, desc, statusText) {
+            document.getElementById("modal-title").innerText = statusText;
+            document.getElementById("modal-desc").innerText = desc;
+            gameModal.classList.remove("hidden");
+        }
+
+        /**
+         * UI NAVIGATION & EVENT BINDINGS
+         */
+        document.getElementById("btn-main-play").addEventListener("click", () => {
+            AudioSys.playClick();
+            mainMenu.classList.add("hidden");
+            levelSelect.classList.remove("hidden");
+            gameState = "LEVEL_SELECT";
+        });
+
+        document.getElementById("btn-back-main").addEventListener("click", () => {
+            AudioSys.playClick();
+            levelSelect.classList.add("hidden");
+            mainMenu.classList.remove("hidden");
+            gameState = "MENU";
+        });
+
+        function selectLevel(levelNum) {
+            AudioSys.playClick();
+            prepareGame(levelNum);
+        }
+
+        document.getElementById("btn-restart").addEventListener("click", () => {
+            AudioSys.playClick();
+            prepareGame(currentLevel);
+        });
+
+        document.getElementById("btn-menu").addEventListener("click", () => {
+            AudioSys.playClick();
+            gameModal.classList.add("hidden");
+            gameHud.classList.add("hidden");
+            countdownOverlay.classList.add("hidden");
+            levelSelect.classList.remove("hidden");
+            gameState = "LEVEL_SELECT";
+        });
+
+        // Initialize display
+        window.onload = function() {
+            generateLevel(1);
+            render();
+        };
+    </script>
+</body>
+</html>
