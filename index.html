@@ -54,15 +54,17 @@
 </div>
 
 <script>
-// --- BACKGROUND MUSIC (Phát file bgm.mp3 cùng thư mục) ---
-const bgMusic = new Audio('bgm.mp3');
+// --- BACKGROUND MUSIC CHO GITHUB PAGES ---
+// Đảm bảo file "nukebgm.mp3" viết đúng chính xác từng ký tự (thường viết thường hết)
+// và nằm cùng cấp với file index.html trên GitHub kho lưu trữ của bạn.
+const bgMusic = new Audio('nukebgm.mp3');
 bgMusic.loop = true;
 bgMusic.volume = 0.5;
 
 function playBGM() {
     if (bgMusic.paused) {
         bgMusic.play().catch(err => {
-            console.log("Cần người dùng tương tác để phát nhạc MP3:", err);
+            console.log("Trình duyệt chặn autoplay nhạc:", err);
         });
     }
 }
@@ -325,7 +327,6 @@ const wave = {
     },
 
     update(speed) {
-        // vy = speed => Chuyển động chéo 45 độ chuẩn xác
         const vy = isHolding ? -speed : speed;
         this.y += vy;
         this.angle = isHolding ? -Math.PI / 4 : Math.PI / 4;
@@ -454,7 +455,7 @@ function startCountdown() {
         } else {
             clearInterval(countdownTimer);
             currentState = STATE.PLAYING;
-            playBGM(); // Phát nhạc mp3 ngay khi bắt đầu
+            playBGM(); // Phát nhạc ngay khi bắt đầu màn chơi
         }
     }, 800);
 }
@@ -860,13 +861,13 @@ function update() {
 
         if (checkCollisions()) {
             currentState = STATE.GAME_OVER;
-            stopBGM(); // Dừng nhạc MP3 khi va chạm
+            stopBGM(); // Dừng nhạc khi chết
             triggerExplosion(wave.x + cameraX, wave.y);
         }
 
         if (cameraX >= level.length) {
             currentState = STATE.VICTORY;
-            stopBGM(); // Dừng nhạc MP3 khi thắng
+            stopBGM(); // Dừng nhạc khi thắng
             sounds.playWin();
         }
     } else if (currentState === STATE.GAME_OVER) {
@@ -906,7 +907,7 @@ function gameLoop() {
 
 function handlePress(e) {
     sounds.init();
-    playBGM(); // Tương tác đầu tiên sẽ bật nhạc MP3
+    playBGM(); // Kích hoạt phát nhạc khi có tương tác đầu tiên
 
     if (currentState === STATE.MAIN_MENU) {
         sounds.playClick();
