@@ -18,7 +18,7 @@
             height: 100%;
             overflow: hidden;
             background-color: #000;
-            font-family: 'Arial Black', 'Impact', sans-serif;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
         }
 
         #game-container {
@@ -33,19 +33,6 @@
         canvas {
             display: block;
             box-shadow: 0 0 30px rgba(0,0,0,0.8);
-        }
-
-        /* Overlay UI Elements */
-        .ui-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
         }
 
         .touch-zone {
@@ -152,7 +139,6 @@ const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 const touchZone = document.getElementById('touchZone');
 
-// Native Resolution Aspect Ratio (16:9)
 const GAME_WIDTH = 1280;
 const GAME_HEIGHT = 720;
 
@@ -178,7 +164,6 @@ function resizeCanvas() {
 window.addEventListener('resize', resizeCanvas);
 resizeCanvas();
 
-// Game States
 const STATE = {
     MAIN_MENU: 0,
     LEVEL_SELECT: 1,
@@ -193,7 +178,7 @@ let isHolding = false;
 let currentLevelIndex = 0;
 let levelProgress = 0;
 
-// Level Definitions
+// Levels Config
 const LEVELS = [
     {
         name: "STEREO MADNESS",
@@ -201,9 +186,9 @@ const LEVELS = [
         colorBg: "#001b44",
         colorTheme: "#0077ff",
         colorSecondary: "#00d4ff",
-        speed: 7,
+        speed: 8,
         length: 22000,
-        gapHeight: 280,
+        gapHeight: 300,
         generateTerrain: function() {
             return generateLevelMap(1, this.length, this.gapHeight);
         }
@@ -214,9 +199,9 @@ const LEVELS = [
         colorBg: "#003311",
         colorTheme: "#00cc44",
         colorSecondary: "#66ff88",
-        speed: 8.5,
+        speed: 9.5,
         length: 26000,
-        gapHeight: 220,
+        gapHeight: 250,
         generateTerrain: function() {
             return generateLevelMap(2, this.length, this.gapHeight);
         }
@@ -224,19 +209,18 @@ const LEVELS = [
     {
         name: "DEMON WAVE",
         difficulty: "KHÓ",
-        colorBg: "#33001a",
-        colorTheme: "#ff0055",
-        colorSecondary: "#ff6699",
+        colorBg: "#33000d",
+        colorTheme: "#ff0033",
+        colorSecondary: "#ff6688",
         speed: 10,
-        length: 36000, // Kéo dài Map 3
-        gapHeight: 250, // Nới rộng không gian cho mượt
+        length: 38000, // Bản đồ kéo dài
+        gapHeight: 280, // Mở rộng địa hình thoải mái
         generateTerrain: function() {
             return generateLevelMap(3, this.length, this.gapHeight);
         }
     }
 ];
 
-// Map Generator
 function generateLevelMap(levelNum, totalLength, baseGap) {
     const terrain = [];
     const spikes = [];
@@ -250,43 +234,40 @@ function generateLevelMap(levelNum, totalLength, baseGap) {
         let gap = baseGap;
         
         if (levelNum === 3) {
-            // Map 3 chướng ngại vật phong phú
-            let type = Math.floor(Math.random() * 4);
+            let type = Math.floor(Math.random() * 3);
             if (type === 1) {
-                // Đỉnh uốn lượn
-                let targetY = 180 + Math.random() * (GAME_HEIGHT - 360);
+                let targetY = 200 + Math.random() * (GAME_HEIGHT - 400);
                 terrain.push({ x1: x, y1: currentY, x2: x + segLen, y2: targetY, gap: gap });
                 currentY = targetY;
             } else {
                 terrain.push({ x1: x, y1: currentY, x2: x + segLen, y2: currentY, gap: gap });
             }
             
-            // Thêm gai trên trần và sàn
-            if (Math.random() < 0.6) {
+            // Gai nhọn bám trần/sàn
+            if (Math.random() < 0.65) {
                 spikes.push({
-                    x: x + segLen * 0.5,
+                    x: x + segLen * 0.4,
                     y: currentY - gap/2 + 20,
                     type: 'ceiling'
                 });
             }
-            if (Math.random() < 0.6) {
+            if (Math.random() < 0.65) {
                 spikes.push({
-                    x: x + segLen * 0.5 + 80,
+                    x: x + segLen * 0.7,
                     y: currentY + gap/2 - 20,
                     type: 'floor'
                 });
             }
             
-            // Thêm cưa xoay giữa đường ở Màn 3
-            if (Math.random() < 0.45) {
+            // Bánh xe cưa xoay
+            if (Math.random() < 0.5) {
                 sawblades.push({
-                    x: x + segLen * 0.7,
-                    y: currentY + (Math.random() * 100 - 50),
-                    radius: 32
+                    x: x + segLen * 0.5,
+                    y: currentY + (Math.random() * 80 - 40),
+                    radius: 34
                 });
             }
         } else if (levelNum === 2) {
-            // Màn 2
             let targetY = 200 + Math.random() * (GAME_HEIGHT - 400);
             terrain.push({ x1: x, y1: currentY, x2: x + segLen, y2: targetY, gap: gap });
             currentY = targetY;
@@ -299,7 +280,6 @@ function generateLevelMap(levelNum, totalLength, baseGap) {
                 });
             }
         } else {
-            // Màn 1 Dễ
             let targetY = 220 + Math.random() * (GAME_HEIGHT - 440);
             terrain.push({ x1: x, y1: currentY, x2: x + segLen, y2: targetY, gap: gap });
             currentY = targetY;
@@ -311,17 +291,17 @@ function generateLevelMap(levelNum, totalLength, baseGap) {
     return { terrain, spikes, sawblades };
 }
 
-// Wave Player
+// Wave Physics
 const wave = {
-    x: 200,
+    x: 220,
     y: GAME_HEIGHT / 2,
-    size: 16,
+    size: 14,
     angle: 0,
     trail: [],
     particles: [],
     
     reset() {
-        this.x = 200;
+        this.x = 220;
         this.y = GAME_HEIGHT / 2;
         this.angle = 0;
         this.trail = [{x: this.x, y: this.y}];
@@ -329,18 +309,17 @@ const wave = {
     },
 
     update(speed) {
+        // Chuyển động chéo 45 độ: vy = speed
         const vy = isHolding ? -speed : speed;
         this.y += vy;
-        this.angle = isHolding ? -Math.PI / 4 : Math.PI / 4; // 45 độ chuẩn
+        this.angle = isHolding ? -Math.PI / 4 : Math.PI / 4;
         
-        // Thêm đuôi Wave
         this.trail.push({ x: this.x, y: this.y });
         
-        // Hạt hiệu ứng
-        if (Math.random() < 0.6) {
+        if (Math.random() < 0.7) {
             this.particles.push({
                 x: this.x - 10,
-                y: this.y + (Math.random() * 10 - 5),
+                y: this.y + (Math.random() * 8 - 4),
                 vx: -2 - Math.random() * 2,
                 vy: (Math.random() - 0.5) * 2,
                 size: 3 + Math.random() * 3,
@@ -349,18 +328,17 @@ const wave = {
             });
         }
 
-        // Cập nhật hạt
         for (let i = this.particles.length - 1; i >= 0; i--) {
             let p = this.particles[i];
             p.x += p.vx;
             p.y += p.vy;
-            p.life -= 0.04;
+            p.life -= 0.05;
             if (p.life <= 0) this.particles.splice(i, 1);
         }
     },
 
     draw(ctx) {
-        // Vẽ vệt đuôi Zigzag
+        // Zigzag Trail
         if (this.trail.length > 1) {
             ctx.save();
             ctx.beginPath();
@@ -369,7 +347,7 @@ const wave = {
                 ctx.lineTo(this.trail[i].x, this.trail[i].y);
             }
             ctx.strokeStyle = '#ffffff';
-            ctx.lineWidth = 6;
+            ctx.lineWidth = 5;
             ctx.lineCap = 'round';
             ctx.lineJoin = 'round';
             ctx.shadowColor = LEVELS[currentLevelIndex].colorSecondary;
@@ -378,7 +356,7 @@ const wave = {
             ctx.restore();
         }
 
-        // Vẽ hạt
+        // Particles
         this.particles.forEach(p => {
             ctx.save();
             ctx.globalAlpha = p.life;
@@ -387,16 +365,14 @@ const wave = {
             ctx.restore();
         });
 
-        // Vẽ Con thoi Wave
+        // Wave Dart Icon
         ctx.save();
         ctx.translate(this.x, this.y);
         ctx.rotate(this.angle);
         
-        // Outer Glow
         ctx.shadowColor = LEVELS[currentLevelIndex].colorSecondary;
         ctx.shadowBlur = 15;
         
-        // Body (Dart Shape)
         ctx.fillStyle = '#ffffff';
         ctx.beginPath();
         ctx.moveTo(18, 0);
@@ -406,7 +382,6 @@ const wave = {
         ctx.closePath();
         ctx.fill();
 
-        // Inner Accent
         ctx.fillStyle = LEVELS[currentLevelIndex].colorTheme;
         ctx.beginPath();
         ctx.moveTo(10, 0);
@@ -420,7 +395,6 @@ const wave = {
     }
 };
 
-// Particles System khi nổ (Chết)
 let deathExplosion = [];
 function triggerExplosion(x, y) {
     deathExplosion = [];
@@ -442,7 +416,6 @@ function triggerExplosion(x, y) {
     }
 }
 
-// Countdown Variables
 let countdownValue = 3;
 let countdownTimer = null;
 
@@ -465,7 +438,6 @@ function startCountdown() {
     }, 800);
 }
 
-// Current Level Data Storage
 let currentMapData = null;
 let cameraX = 0;
 
@@ -478,7 +450,6 @@ function loadLevel(index) {
     startCountdown();
 }
 
-// Global Animated Grid Background
 let bgOffset = 0;
 function drawBackground(ctx, level) {
     const bgCol = level ? level.colorBg : "#00122e";
@@ -487,7 +458,6 @@ function drawBackground(ctx, level) {
     ctx.fillStyle = bgCol;
     ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
 
-    // Dynamic Grid Lines
     ctx.save();
     ctx.strokeStyle = gridCol;
     ctx.globalAlpha = 0.15;
@@ -511,14 +481,12 @@ function drawBackground(ctx, level) {
     ctx.restore();
 }
 
-// --- COLLISION DETECTOR ---
 function checkCollisions() {
     if (!currentMapData) return false;
     
     const wx = wave.x + cameraX;
     const wy = wave.y;
 
-    // 1. Kiểm tra va chạm với Địa hình (Hành lang Ceiling/Floor)
     let currentSegment = currentMapData.terrain.find(s => wx >= s.x1 && wx <= s.x2);
     if (currentSegment) {
         let progress = (wx - currentSegment.x1) / (currentSegment.x2 - currentSegment.x1);
@@ -530,11 +498,9 @@ function checkCollisions() {
             return true;
         }
     } else if (wx > 600) {
-        // Ngoài map
         return true;
     }
 
-    // 2. Kiểm tra Va chạm Gai (Spikes)
     for (let sp of currentMapData.spikes) {
         let dx = Math.abs(wx - sp.x);
         let dy = Math.abs(wy - sp.y);
@@ -543,7 +509,6 @@ function checkCollisions() {
         }
     }
 
-    // 3. Kiểm tra Va chạm Cưa xoay (Sawblades)
     for (let saw of currentMapData.sawblades) {
         let dx = wx - saw.x;
         let dy = wy - saw.y;
@@ -556,7 +521,6 @@ function checkCollisions() {
     return false;
 }
 
-// --- DRAW TERRAIN & HAZARDS ---
 function drawTerrain(ctx) {
     if (!currentMapData) return;
     const level = LEVELS[currentLevelIndex];
@@ -564,7 +528,6 @@ function drawTerrain(ctx) {
     ctx.save();
     ctx.translate(-cameraX, 0);
 
-    // Draw Corridors
     currentMapData.terrain.forEach(seg => {
         if (seg.x2 < cameraX - 100 || seg.x1 > cameraX + GAME_WIDTH + 100) return;
 
@@ -573,7 +536,6 @@ function drawTerrain(ctx) {
         let botY1 = seg.y1 + seg.gap / 2;
         let botY2 = seg.y2 + seg.gap / 2;
 
-        // Ceilings (Trần nhà)
         ctx.fillStyle = level.colorBg;
         ctx.beginPath();
         ctx.moveTo(seg.x1, 0);
@@ -583,7 +545,6 @@ function drawTerrain(ctx) {
         ctx.closePath();
         ctx.fill();
 
-        // Ceilings Border
         ctx.strokeStyle = level.colorTheme;
         ctx.lineWidth = 4;
         ctx.shadowColor = level.colorTheme;
@@ -593,7 +554,6 @@ function drawTerrain(ctx) {
         ctx.lineTo(seg.x2, topY2);
         ctx.stroke();
 
-        // Floors (Sàn nhà)
         ctx.beginPath();
         ctx.moveTo(seg.x1, GAME_HEIGHT);
         ctx.lineTo(seg.x2, GAME_HEIGHT);
@@ -602,14 +562,12 @@ function drawTerrain(ctx) {
         ctx.closePath();
         ctx.fill();
 
-        // Floors Border
         ctx.beginPath();
         ctx.moveTo(seg.x1, botY1);
         ctx.lineTo(seg.x2, botY2);
         ctx.stroke();
     });
 
-    // Draw Spikes (Gai nhọn)
     currentMapData.spikes.forEach(sp => {
         if (sp.x < cameraX - 50 || sp.x > cameraX + GAME_WIDTH + 50) return;
         ctx.save();
@@ -632,7 +590,6 @@ function drawTerrain(ctx) {
         ctx.restore();
     });
 
-    // Draw Sawblades (Bánh xe cưa)
     let sawAngle = Date.now() * 0.005;
     currentMapData.sawblades.forEach(saw => {
         if (saw.x < cameraX - 100 || saw.x > cameraX + GAME_WIDTH + 100) return;
@@ -669,20 +626,16 @@ function drawTerrain(ctx) {
     ctx.restore();
 }
 
-// --- RENDER MAIN MENU (100% Giao diện chuẩn với duy nhất 1 nút Play ở giữa) ---
 function renderMainMenu() {
     drawBackground(ctx, null);
 
-    // Title GD Text
     ctx.save();
     ctx.textAlign = 'center';
     
-    // Main Logo Text "GEOMETRY DASH"
-    ctx.font = '900 78px "Arial Black", Impact, sans-serif';
+    ctx.font = '900 78px system-ui, -apple-system, sans-serif';
     ctx.fillStyle = '#000000';
     ctx.fillText('GEOMETRY DASH', GAME_WIDTH / 2 + 5, 185);
     
-    // Yellow-Green 3D Gradient
     let grad = ctx.createLinearGradient(0, 100, 0, 190);
     grad.addColorStop(0, '#ccff00');
     grad.addColorStop(0.5, '#a2ff00');
@@ -693,41 +646,36 @@ function renderMainMenu() {
     ctx.fillText('GEOMETRY DASH', GAME_WIDTH / 2, 180);
     ctx.strokeText('GEOMETRY DASH', GAME_WIDTH / 2, 180);
 
-    // Sub-banner "TRY ME!"
-    ctx.font = '900 32px "Arial Black", Impact, sans-serif';
+    ctx.font = '900 32px system-ui, -apple-system, sans-serif';
     ctx.fillStyle = '#ffff00';
     ctx.strokeStyle = '#000';
     ctx.lineWidth = 3;
     ctx.fillText('TRY ME!', GAME_WIDTH / 2 + 160, 235);
     ctx.strokeText('TRY ME!', GAME_WIDTH / 2 + 160, 235);
 
-    // --- DUY NHẤT 1 NÚT PLAY TRUNG TÂM ---
+    // Nút Play duy nhất
     const cx = GAME_WIDTH / 2;
     const cy = GAME_HEIGHT / 2 + 50;
     
     ctx.shadowColor = 'rgba(0, 255, 100, 0.4)';
     ctx.shadowBlur = 25;
 
-    // Green Plus Container
     ctx.fillStyle = '#22cc33';
     ctx.strokeStyle = '#ffffff';
     ctx.lineWidth = 6;
     
-    // Draw Green Cross Shape
     ctx.beginPath();
     ctx.roundRect(cx - 35, cy - 85, 70, 170, 10);
     ctx.roundRect(cx - 85, cy - 35, 170, 70, 10);
     ctx.fill();
     ctx.stroke();
 
-    // Blue corner boxes
     ctx.fillStyle = '#00cccc';
     ctx.fillRect(cx - 75, cy - 75, 35, 35);
     ctx.fillRect(cx + 40, cy - 75, 35, 35);
     ctx.fillRect(cx - 75, cy + 40, 35, 35);
     ctx.fillRect(cx + 40, cy + 40, 35, 35);
 
-    // Center Play Triangle (Yellow)
     ctx.fillStyle = '#ffea00';
     ctx.strokeStyle = '#000000';
     ctx.lineWidth = 4;
@@ -742,7 +690,6 @@ function renderMainMenu() {
     ctx.restore();
 }
 
-// --- RENDER LEVEL SELECT CAROUSEL ---
 function renderLevelSelect() {
     const level = LEVELS[currentLevelIndex];
     drawBackground(ctx, level);
@@ -750,7 +697,6 @@ function renderLevelSelect() {
     ctx.save();
     ctx.textAlign = 'center';
 
-    // Carousel Card Box
     const cx = GAME_WIDTH / 2;
     const cy = GAME_HEIGHT / 2;
 
@@ -763,22 +709,18 @@ function renderLevelSelect() {
     ctx.fill();
     ctx.stroke();
 
-    // Title
-    ctx.font = '900 42px "Arial Black", Impact, sans-serif';
+    ctx.font = '900 42px system-ui, -apple-system, sans-serif';
     ctx.fillStyle = '#ffffff';
     ctx.fillText(level.name, cx, cy - 70);
 
-    // Difficulty
-    ctx.font = '700 28px sans-serif';
+    ctx.font = '700 28px system-ui, -apple-system, sans-serif';
     ctx.fillStyle = level.colorSecondary;
     ctx.fillText(`ĐỘ KHÓ: ${level.difficulty}`, cx, cy - 10);
 
-    // Mode Tag
-    ctx.font = '600 22px sans-serif';
+    ctx.font = '600 22px system-ui, -apple-system, sans-serif';
     ctx.fillStyle = '#cccccc';
-    ctx.fillText('CHẾ ĐỘ: WAVE (CHẾ ĐỘ SÓNG 45°)', cx, cy + 40);
+    ctx.fillText('CHẾ ĐỘ: WAVE 45°', cx, cy + 40);
 
-    // Play Button on Level Card
     ctx.fillStyle = '#22cc33';
     ctx.strokeStyle = '#fff';
     ctx.lineWidth = 3;
@@ -787,7 +729,6 @@ function renderLevelSelect() {
     ctx.fill();
     ctx.stroke();
 
-    // Yellow Triangle inside Play Button
     ctx.fillStyle = '#ffea00';
     ctx.beginPath();
     ctx.moveTo(cx - 10, cy + 85);
@@ -796,25 +737,21 @@ function renderLevelSelect() {
     ctx.closePath();
     ctx.fill();
 
-    // Navigation Arrows (< and >)
-    ctx.font = '900 60px sans-serif';
+    ctx.font = '900 60px system-ui, -apple-system, sans-serif';
     ctx.fillStyle = '#ffffff';
     ctx.fillText('‹', cx - 330, cy + 20);
     ctx.fillText('›', cx + 330, cy + 20);
 
-    // Back to Menu Button
-    ctx.font = '700 20px sans-serif';
+    ctx.font = '700 20px system-ui, -apple-system, sans-serif';
     ctx.fillStyle = '#aaaaaa';
     ctx.fillText('QUAY LẠI [ESC]', cx, cy + 220);
 
     ctx.restore();
 }
 
-// --- RENDER HUD (Progress Bar & Countdown) ---
 function renderHUD() {
     const level = LEVELS[currentLevelIndex];
 
-    // Progress Bar Outer
     ctx.save();
     ctx.fillStyle = 'rgba(0,0,0,0.5)';
     ctx.strokeStyle = '#ffffff';
@@ -822,20 +759,17 @@ function renderHUD() {
     ctx.fillRect(GAME_WIDTH / 2 - 200, 20, 400, 16);
     ctx.strokeRect(GAME_WIDTH / 2 - 200, 20, 400, 16);
 
-    // Progress Bar Fill
     ctx.fillStyle = level.colorTheme;
     ctx.fillRect(GAME_WIDTH / 2 - 198, 22, (396 * levelProgress) / 100, 12);
 
-    // Progress Text
-    ctx.font = '700 16px sans-serif';
+    ctx.font = '700 16px system-ui, -apple-system, sans-serif';
     ctx.fillStyle = '#ffffff';
     ctx.textAlign = 'center';
     ctx.fillText(`${Math.floor(levelProgress)}%`, GAME_WIDTH / 2, 53);
 
-    // Render Countdown (3... 2... 1... GO!)
     if (currentState === STATE.COUNTDOWN) {
         ctx.textAlign = 'center';
-        ctx.font = '900 110px "Arial Black", Impact, sans-serif';
+        ctx.font = '900 110px system-ui, -apple-system, sans-serif';
         ctx.fillStyle = '#ffea00';
         ctx.strokeStyle = '#000000';
         ctx.lineWidth = 6;
@@ -848,13 +782,11 @@ function renderHUD() {
     ctx.restore();
 }
 
-// --- RENDER GAME OVER / VICTORY MODALS ---
 function renderEndScreens() {
     ctx.save();
     ctx.textAlign = 'center';
 
     if (currentState === STATE.GAME_OVER) {
-        // Death Explosion Particles
         deathExplosion.forEach(p => {
             ctx.save();
             ctx.translate(p.x - cameraX, p.y);
@@ -864,33 +796,32 @@ function renderEndScreens() {
             ctx.restore();
         });
 
-        // Banner
         ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
         ctx.fillRect(0, GAME_HEIGHT / 2 - 100, GAME_WIDTH, 200);
 
-        ctx.font = '900 64px "Arial Black", Impact, sans-serif';
+        ctx.font = '900 64px system-ui, -apple-system, sans-serif';
         ctx.fillStyle = '#ff2200';
         ctx.strokeStyle = '#000';
         ctx.lineWidth = 4;
         ctx.fillText('THỬ LẠI!', GAME_WIDTH / 2, GAME_HEIGHT / 2 - 10);
         ctx.strokeText('THỬ LẠI!', GAME_WIDTH / 2, GAME_HEIGHT / 2 - 10);
 
-        ctx.font = '700 24px sans-serif';
+        ctx.font = '700 24px system-ui, -apple-system, sans-serif';
         ctx.fillStyle = '#ffffff';
-        ctx.fillText('CHẠM HỎẶC BẤM SPACE ĐỂ CHƠI LẠI', GAME_WIDTH / 2, GAME_HEIGHT / 2 + 50);
+        ctx.fillText('CHẠM HOẶC BẤM SPACE ĐỂ CHƠI LẠI', GAME_WIDTH / 2, GAME_HEIGHT / 2 + 50);
 
     } else if (currentState === STATE.VICTORY) {
         ctx.fillStyle = 'rgba(0, 0, 0, 0.75)';
         ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
 
-        ctx.font = '900 70px "Arial Black", Impact, sans-serif';
+        ctx.font = '900 70px system-ui, -apple-system, sans-serif';
         ctx.fillStyle = '#00ff66';
         ctx.strokeStyle = '#000';
         ctx.lineWidth = 5;
         ctx.fillText('HOÀN THÀNH!', GAME_WIDTH / 2, GAME_HEIGHT / 2 - 30);
         ctx.strokeText('HOÀN THÀNH!', GAME_WIDTH / 2, GAME_HEIGHT / 2 - 30);
 
-        ctx.font = '700 26px sans-serif';
+        ctx.font = '700 26px system-ui, -apple-system, sans-serif';
         ctx.fillStyle = '#ffffff';
         ctx.fillText('CHÚC MỪNG BẠN ĐÃ VƯỢT QUA MÀN CHƠI!', GAME_WIDTH / 2, GAME_HEIGHT / 2 + 30);
         ctx.fillText('CHẠM VÀO MÀN HÌNH ĐỂ VỀ MENU', GAME_WIDTH / 2, GAME_HEIGHT / 2 + 80);
@@ -899,31 +830,24 @@ function renderEndScreens() {
     ctx.restore();
 }
 
-// --- MAIN GAME LOOP ---
 function update() {
     if (currentState === STATE.PLAYING) {
         const level = LEVELS[currentLevelIndex];
-        
-        // Di chuyển camera và Wave
         cameraX += level.speed;
         wave.update(level.speed);
 
-        // Tính % hoàn thành
         levelProgress = Math.min(100, (cameraX / level.length) * 100);
 
-        // Kiếm tra Va chạm (Chết)
         if (checkCollisions()) {
             currentState = STATE.GAME_OVER;
             triggerExplosion(wave.x + cameraX, wave.y);
         }
 
-        // Kiểm tra Chiến thắng
         if (cameraX >= level.length) {
             currentState = STATE.VICTORY;
             sounds.playWin();
         }
     } else if (currentState === STATE.GAME_OVER) {
-        // Cập nhật mảnh vụn nổ
         deathExplosion.forEach(p => {
             p.x += p.vx;
             p.y += p.vy;
@@ -940,7 +864,6 @@ function render() {
     } else if (currentState === STATE.LEVEL_SELECT) {
         renderLevelSelect();
     } else {
-        // COUNTDOWN, PLAYING, GAME_OVER, VICTORY
         drawBackground(ctx, LEVELS[currentLevelIndex]);
         drawTerrain(ctx);
         if (currentState !== STATE.GAME_OVER) {
@@ -959,45 +882,34 @@ function gameLoop() {
     requestAnimationFrame(gameLoop);
 }
 
-// --- INPUT HANDLING ---
 function handlePress(e) {
     sounds.init();
 
     if (currentState === STATE.MAIN_MENU) {
-        // Bấm vào nút Play trung tâm
         sounds.playClick();
         currentState = STATE.LEVEL_SELECT;
     } else if (currentState === STATE.LEVEL_SELECT) {
         let rect = canvas.getBoundingClientRect();
         let clickX = (e.clientX - rect.left) / scale;
-        let clickY = (e.clientY - rect.top) / scale;
 
         const cx = GAME_WIDTH / 2;
-        const cy = GAME_HEIGHT / 2;
 
-        // Bấm Nút Trái (<)
         if (clickX < cx - 200) {
             sounds.playClick();
             currentLevelIndex = (currentLevelIndex - 1 + LEVELS.length) % LEVELS.length;
-        } 
-        // Bấm Nút Phải (>)
-        else if (clickX > cx + 200) {
+        } else if (clickX > cx + 200) {
             sounds.playClick();
             currentLevelIndex = (currentLevelIndex + 1) % LEVELS.length;
-        } 
-        // Bấm Nút Play ở giữa màn chọn
-        else {
+        } else {
             sounds.playClick();
             loadLevel(currentLevelIndex);
         }
     } else if (currentState === STATE.COUNTDOWN || currentState === STATE.PLAYING) {
         isHolding = true;
     } else if (currentState === STATE.GAME_OVER) {
-        // Retry lại màn chơi
         sounds.playClick();
         loadLevel(currentLevelIndex);
     } else if (currentState === STATE.VICTORY) {
-        // Quay lại màn hình chọn level
         sounds.playClick();
         currentState = STATE.LEVEL_SELECT;
     }
@@ -1007,7 +919,6 @@ function handleRelease() {
     isHolding = false;
 }
 
-// Event Listeners
 touchZone.addEventListener('mousedown', (e) => handlePress(e));
 touchZone.addEventListener('mouseup', handleRelease);
 touchZone.addEventListener('touchstart', (e) => {
@@ -1037,7 +948,6 @@ window.addEventListener('keyup', (e) => {
     }
 });
 
-// Chạy Game
 gameLoop();
 </script>
 </body>
