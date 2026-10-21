@@ -54,15 +54,15 @@
 </div>
 
 <script>
-// --- BACKGROUND MUSIC (Phát file bgm.mp4 cùng thư mục) ---
-const bgMusic = new Audio('bgm.mp4');
+// --- BACKGROUND MUSIC (Phát file bgm.mp3 cùng thư mục) ---
+const bgMusic = new Audio('bgm.mp3');
 bgMusic.loop = true;
 bgMusic.volume = 0.5;
 
 function playBGM() {
     if (bgMusic.paused) {
         bgMusic.play().catch(err => {
-            console.log("Cần người dùng tương tác để phát nhạc MP4:", err);
+            console.log("Cần người dùng tương tác để phát nhạc MP3:", err);
         });
     }
 }
@@ -454,7 +454,7 @@ function startCountdown() {
         } else {
             clearInterval(countdownTimer);
             currentState = STATE.PLAYING;
-            playBGM(); // Bắt đầu phát nhạc mp4 khi hết đếm ngược
+            playBGM(); // Phát nhạc mp3 ngay khi bắt đầu
         }
     }, 800);
 }
@@ -860,13 +860,13 @@ function update() {
 
         if (checkCollisions()) {
             currentState = STATE.GAME_OVER;
-            stopBGM(); // Dừng nhạc MP4 khi va chạm
+            stopBGM(); // Dừng nhạc MP3 khi va chạm
             triggerExplosion(wave.x + cameraX, wave.y);
         }
 
         if (cameraX >= level.length) {
             currentState = STATE.VICTORY;
-            stopBGM(); // Dừng nhạc MP4 khi chiến thắng
+            stopBGM(); // Dừng nhạc MP3 khi thắng
             sounds.playWin();
         }
     } else if (currentState === STATE.GAME_OVER) {
@@ -906,7 +906,7 @@ function gameLoop() {
 
 function handlePress(e) {
     sounds.init();
-    playBGM(); // Kích hoạt nhạc khi tương tác
+    playBGM(); // Tương tác đầu tiên sẽ bật nhạc MP3
 
     if (currentState === STATE.MAIN_MENU) {
         sounds.playClick();
