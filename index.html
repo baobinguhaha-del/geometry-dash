@@ -3,760 +3,1042 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Geometry Dash - Wave Edition</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Russo+One&display=swap" rel="stylesheet">
+    <title>Geometry Dash - Wave Mode</title>
     <style>
-        body {
+        * {
             margin: 0;
             padding: 0;
-            background-color: #000;
-            color: #fff;
-            font-family: 'Russo One', 'Fredoka One', sans-serif;
+            box-sizing: border-box;
             user-select: none;
             -webkit-user-select: none;
+        }
+
+        body, html {
+            width: 100%;
+            height: 100%;
             overflow: hidden;
+            background-color: #000;
+            font-family: 'Arial Black', 'Impact', sans-serif;
         }
 
-        /* GD Style Text & Outline */
-        .gd-title {
-            font-family: 'Fredoka One', cursive;
-            color: #55ff55;
-            text-shadow: 
-                3px 3px 0px #000,
-                -3px -3px 0px #000,
-                3px -3px 0px #000,
-                -3px 3px 0px #000,
-                0px 4px 0px #000;
-            letter-spacing: 2px;
-        }
-
-        .gd-text-yellow {
-            color: #ffeb3b;
-            text-shadow: 
-                2px 2px 0px #000,
-                -2px -2px 0px #000,
-                2px -2px 0px #000,
-                -2px 2px 0px #000;
-        }
-
-        /* Animated Pulsing effect */
-        @keyframes pulse-subtle {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-        }
-        .animate-pulse-subtle {
-            animation: pulse-subtle 1.8s infinite ease-in-out;
-        }
-
-        /* Countdown text animation */
-        @keyframes countdown-pop {
-            0% { transform: scale(2); opacity: 0; }
-            30% { transform: scale(1); opacity: 1; }
-            80% { transform: scale(1); opacity: 1; }
-            100% { transform: scale(0.6); opacity: 0; }
-        }
-        .animate-countdown {
-            animation: countdown-pop 0.9s ease-out forwards;
-        }
-
-        /* Custom GD Button styling */
-        .gd-btn {
-            background: linear-gradient(180deg, #32cd32 0%, #1e8b1e 100%);
-            border: 4px solid #ffffff;
-            box-shadow: 0 6px 0 #0f4f0f, 0 10px 15px rgba(0,0,0,0.5);
-            transition: transform 0.1s, box-shadow 0.1s;
-        }
-        .gd-btn:active {
-            transform: translateY(4px);
-            box-shadow: 0 2px 0 #0f4f0f, 0 5px 10px rgba(0,0,0,0.5);
-        }
-
-        /* Level Card Style */
-        .level-card {
-            background: rgba(0, 0, 0, 0.6);
-            border: 3px solid rgba(255, 255, 255, 0.8);
-            backdrop-filter: blur(5px);
-            transition: all 0.2s ease;
-        }
-        .level-card:hover {
-            transform: scale(1.05);
-            border-color: #55ff55;
+        #game-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
 
         canvas {
             display: block;
-            width: 100vw;
-            height: 100vh;
+            box-shadow: 0 0 30px rgba(0,0,0,0.8);
+        }
+
+        /* Overlay UI Elements */
+        .ui-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .touch-zone {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 5;
+            cursor: pointer;
         }
     </style>
 </head>
-<body class="flex items-center justify-center min-h-screen">
+<body>
 
-    <!-- Canvas Container -->
-    <div id="game-container" class="relative w-full h-full">
-        <canvas id="gameCanvas"></canvas>
+<div id="game-container">
+    <canvas id="gameCanvas"></canvas>
+    <div id="touchZone" class="touch-zone"></div>
+</div>
 
-        <!-- MAIN MENU OVERLAY -->
-        <div id="main-menu" class="absolute inset-0 flex flex-col items-center justify-between p-6 z-20 bg-blue-900/40">
-            <!-- Header Logo -->
-            <div class="mt-8 text-center flex flex-col items-center select-none">
-                <h1 class="gd-title text-4xl sm:text-6xl md:text-7xl font-extrabold uppercase tracking-widest text-emerald-400">
-                    GEOMETRY DASH
-                </h1>
-                <div class="gd-text-yellow text-xl sm:text-2xl mt-1 tracking-wider font-bold animate-pulse-subtle">
-                    TRY ME!
-                </div>
-            </div>
-
-            <!-- Central Play Button (Exact UI match) -->
-            <div class="my-auto">
-                <button id="btn-main-play" class="gd-btn w-28 h-28 sm:w-36 sm:h-36 rounded-2xl flex items-center justify-center relative cursor-pointer group">
-                    <div class="w-16 h-16 sm:w-20 sm:h-20 bg-yellow-400 rounded-lg flex items-center justify-center border-2 border-black shadow-inner group-hover:scale-105 transition-transform">
-                        <svg class="w-10 h-10 sm:w-12 sm:h-12 text-black fill-current ml-1" viewBox="0 0 24 24">
-                            <path d="M8 5v14l11-7z"/>
-                        </svg>
-                    </div>
-                </button>
-            </div>
-
-            <!-- Footer Info -->
-            <div class="text-xs sm:text-sm text-gray-300 opacity-80 mb-2">
-                Chế độ duy nhất: <span class="text-yellow-300 font-bold">WAVE MODE</span>
-            </div>
-        </div>
-
-        <!-- LEVEL SELECT OVERLAY -->
-        <div id="level-select" class="absolute inset-0 hidden flex-col items-center justify-center p-6 z-20 bg-black/80 backdrop-blur-md">
-            <h2 class="gd-title text-3xl sm:text-5xl mb-8 text-yellow-400 uppercase">CHỌN MÀN CHƠI</h2>
-            
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl w-full px-4">
-                <!-- Level 1: Dễ -->
-                <div onclick="selectLevel(1)" class="level-card rounded-2xl p-6 text-center cursor-pointer flex flex-col items-center border-cyan-400/50 hover:border-cyan-400 shadow-lg shadow-cyan-950/50">
-                    <div class="w-16 h-16 rounded-full bg-cyan-500/20 flex items-center justify-center mb-4 border-2 border-cyan-400">
-                        <span class="text-cyan-300 text-2xl font-bold">1</span>
-                    </div>
-                    <h3 class="text-2xl font-bold text-cyan-400 mb-2">DỄ</h3>
-                    <p class="text-xs text-gray-300 mb-4">Địa hình rộng rãi, tốc độ vừa phải. Thích hợp để làm quen.</p>
-                    <div class="mt-auto px-4 py-2 bg-cyan-600 hover:bg-cyan-500 rounded-xl text-white font-bold w-full">BẮT ĐẦU</div>
-                </div>
-
-                <!-- Level 2: Trung Bình -->
-                <div onclick="selectLevel(2)" class="level-card rounded-2xl p-6 text-center cursor-pointer flex flex-col items-center border-purple-400/50 hover:border-purple-400 shadow-lg shadow-purple-950/50">
-                    <div class="w-16 h-16 rounded-full bg-purple-500/20 flex items-center justify-center mb-4 border-2 border-purple-400">
-                        <span class="text-purple-300 text-2xl font-bold">2</span>
-                    </div>
-                    <h3 class="text-2xl font-bold text-purple-400 mb-2">TRUNG BÌNH</h3>
-                    <p class="text-xs text-gray-300 mb-4">Hành lang hẹp hơn, chướng ngại vật xuất hiện dồn dập.</p>
-                    <div class="mt-auto px-4 py-2 bg-purple-600 hover:bg-purple-500 rounded-xl text-white font-bold w-full">BẮT ĐẦU</div>
-                </div>
-
-                <!-- Level 3: Khó -->
-                <div onclick="selectLevel(3)" class="level-card rounded-2xl p-6 text-center cursor-pointer flex flex-col items-center border-red-500/50 hover:border-red-500 shadow-lg shadow-red-950/50">
-                    <div class="w-16 h-16 rounded-full bg-red-500/20 flex items-center justify-center mb-4 border-2 border-red-500">
-                        <span class="text-red-400 text-2xl font-bold">3</span>
-                    </div>
-                    <h3 class="text-2xl font-bold text-red-500 mb-2">KHÓ</h3>
-                    <p class="text-xs text-gray-300 mb-4">Khe hẹp cực nhỏ, tốc độ rất nhanh. Yêu cầu phản xạ cực cao!</p>
-                    <div class="mt-auto px-4 py-2 bg-red-600 hover:bg-red-500 rounded-xl text-white font-bold w-full">BẮT ĐẦU</div>
-                </div>
-            </div>
-
-            <button id="btn-back-main" class="mt-8 px-6 py-2 bg-gray-700 hover:bg-gray-600 rounded-xl font-bold border border-gray-400">QUAY LẠI</button>
-        </div>
-
-        <!-- COUNTDOWN OVERLAY -->
-        <div id="countdown-overlay" class="absolute inset-0 hidden pointer-events-none flex items-center justify-center z-20">
-            <span id="countdown-text" class="text-7xl sm:text-9xl font-extrabold gd-text-yellow drop-shadow-2xl">3</span>
-        </div>
-
-        <!-- GAME HUD (Progress & Level Info) -->
-        <div id="game-hud" class="absolute top-0 left-0 right-0 p-4 hidden pointer-events-none flex flex-col items-center z-10">
-            <div class="w-full max-w-md bg-black/50 border border-white/30 rounded-full h-6 p-1 backdrop-blur-sm relative overflow-hidden">
-                <div id="progress-bar" class="h-full bg-gradient-to-r from-green-400 to-emerald-300 rounded-full w-0 transition-all duration-75"></div>
-                <span id="progress-text" class="absolute inset-0 flex items-center justify-center text-xs font-bold drop-shadow">0%</span>
-            </div>
-            <div id="hud-level-name" class="text-xs tracking-widest text-white/70 mt-1 uppercase">Màn 1: Dễ</div>
-        </div>
-
-        <!-- GAME OVER / COMPLETE DIALOG -->
-        <div id="game-modal" class="absolute inset-0 hidden flex-col items-center justify-center p-6 z-30 bg-black/70 backdrop-blur-sm">
-            <div class="bg-gray-900 border-2 border-white/40 rounded-2xl p-8 max-w-sm w-full text-center shadow-2xl">
-                <h2 id="modal-title" class="text-4xl font-extrabold mb-2 gd-title">THẮNG RỒI!</h2>
-                <p id="modal-desc" class="text-gray-300 text-sm mb-6">Bạn đã hoàn thành màn chơi thành công!</p>
-                <div class="flex flex-col gap-3">
-                    <button id="btn-restart" class="px-6 py-3 bg-emerald-600 hover:bg-emerald-500 rounded-xl font-bold text-white shadow-lg">THỬ LẠI</button>
-                    <button id="btn-menu" class="px-6 py-3 bg-gray-700 hover:bg-gray-600 rounded-xl font-bold text-gray-200">DANH SÁCH MÀN</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        /**
-         * GEOMETRY DASH WAVE GAME - AUDIO SYSTEM
-         * Web Audio API Synthesizer for Arcade Sounds
-         */
-        const AudioSys = {
-            ctx: null,
-            init() {
-                if (!this.ctx) {
-                    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
-                }
-            },
-            playClick() {
-                if (!this.ctx) return;
-                const osc = this.ctx.createOscillator();
-                const gain = this.ctx.createGain();
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(400, this.ctx.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(800, this.ctx.currentTime + 0.08);
-                gain.gain.setValueAtTime(0.3, this.ctx.currentTime);
-                gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.08);
-                osc.connect(gain);
-                gain.connect(this.ctx.destination);
-                osc.start();
-                osc.stop(this.ctx.currentTime + 0.08);
-            },
-            playBeep(isFinal = false) {
-                if (!this.ctx) return;
-                const osc = this.ctx.createOscillator();
-                const gain = this.ctx.createGain();
-                osc.type = 'sine';
-                const freq = isFinal ? 880 : 440;
-                osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
-                gain.gain.setValueAtTime(0.3, this.ctx.currentTime);
-                gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.15);
-                osc.connect(gain);
-                gain.connect(this.ctx.destination);
-                osc.start();
-                osc.stop(this.ctx.currentTime + 0.15);
-            },
-            playCrash() {
-                if (!this.ctx) return;
-                const osc = this.ctx.createOscillator();
-                const gain = this.ctx.createGain();
-                osc.type = 'sawtooth';
-                osc.frequency.setValueAtTime(150, this.ctx.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(30, this.ctx.currentTime + 0.3);
-                gain.gain.setValueAtTime(0.5, this.ctx.currentTime);
-                gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.3);
-                osc.connect(gain);
-                gain.connect(this.ctx.destination);
-                osc.start();
-                osc.stop(this.ctx.currentTime + 0.3);
-            },
-            playWin() {
-                if (!this.ctx) return;
-                const now = this.ctx.currentTime;
-                [440, 554.37, 659.25, 880].forEach((freq, idx) => {
-                    const osc = this.ctx.createOscillator();
-                    const gain = this.ctx.createGain();
-                    osc.type = 'triangle';
-                    osc.frequency.setValueAtTime(freq, now + idx * 0.1);
-                    gain.gain.setValueAtTime(0.3, now + idx * 0.1);
-                    gain.gain.linearRampToValueAtTime(0.01, now + idx * 0.1 + 0.2);
-                    osc.connect(gain);
-                    gain.connect(this.ctx.destination);
-                    osc.start(now + idx * 0.1);
-                    osc.stop(now + idx * 0.1 + 0.2);
-                });
-            }
-        };
-
-        /**
-         * LEVEL CONFIGURATIONS
-         * Defines theme colors, corridor gap height, speeds, and level terrain layouts
-         */
-        const LEVEL_CONFIGS = {
-            1: {
-                name: "Dễ (Easy)",
-                themeColor: "#00bfff", // Cyan/Blue
-                bgGradient: ["#001128", "#002b55"],
-                gridColor: "rgba(0, 191, 255, 0.15)",
-                speed: 6.5,
-                corridorGap: 260, // Wide gap
-                length: 22000,
-                waveColor: "#00ffff"
-            },
-            2: {
-                name: "Trung Bình (Medium)",
-                themeColor: "#a855f7", // Purple
-                bgGradient: ["#1e002e", "#3b0058"],
-                gridColor: "rgba(168, 85, 247, 0.15)",
-                speed: 8.5,
-                corridorGap: 190, // Medium gap
-                length: 26000,
-                waveColor: "#e085ff"
-            },
-            3: {
-                name: "Khó (Hard)",
-                themeColor: "#ef4444", // Crimson Red
-                bgGradient: ["#2b0000", "#520000"],
-                gridColor: "rgba(239, 68, 68, 0.2)",
-                speed: 10.5,
-                corridorGap: 135, // Tight gap
-                length: 30000,
-                waveColor: "#ff4d4d"
-            }
-        };
-
-        // DOM Elements
-        const canvas = document.getElementById("gameCanvas");
-        const ctx = canvas.getContext("2d");
-        const mainMenu = document.getElementById("main-menu");
-        const levelSelect = document.getElementById("level-select");
-        const gameHud = document.getElementById("game-hud");
-        const gameModal = document.getElementById("game-modal");
-        const progressBar = document.getElementById("progress-bar");
-        const progressText = document.getElementById("progress-text");
-        const hudLevelName = document.getElementById("hud-level-name");
-        const countdownOverlay = document.getElementById("countdown-overlay");
-        const countdownText = document.getElementById("countdown-text");
-
-        // Game State Variables
-        let gameState = "MENU"; // "MENU", "LEVEL_SELECT", "COUNTDOWN", "PLAYING", "GAMEOVER", "WIN"
-        let currentLevel = 1;
-        let config = LEVEL_CONFIGS[1];
-        let isHolding = false;
-        let animationFrameId = null;
-        let countdownTimer = null;
-
-        // Player & Environment Properties
-        let player = {
-            x: 0,
-            y: 0,
-            size: 16,
-            trail: []
-        };
-        let cameraX = 0;
-        let terrainSegments = [];
-        let sawblades = [];
-
-        // Window Resize Handling
-        function resizeCanvas() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
+<script>
+// --- AUDIO SYNTHESIZER (Web Audio API) ---
+class SoundEffects {
+    constructor() {
+        this.ctx = null;
+    }
+    
+    init() {
+        if (!this.ctx) {
+            this.ctx = new (window.AudioContext || window.webkitAudioContext)();
         }
-        window.addEventListener("resize", resizeCanvas);
-        resizeCanvas();
-
-        /**
-         * LEVEL GENERATOR
-         */
-        function generateLevel(levelNum) {
-            config = LEVEL_CONFIGS[levelNum];
-            terrainSegments = [];
-            sawblades = [];
-
-            const totalLength = config.length;
-            const segmentWidth = 150;
-            const numSegments = Math.ceil(totalLength / segmentWidth);
-            
-            const centerY = canvas.height / 2;
-            let currentCenter = centerY;
-            const halfGap = config.corridorGap / 2;
-
-            // Generate initial flat buffer zone
-            for (let i = 0; i < 5; i++) {
-                terrainSegments.push({
-                    x: i * segmentWidth,
-                    topY: currentCenter - halfGap,
-                    bottomY: currentCenter + halfGap
-                });
-            }
-
-            // Generate dynamic corridor terrain
-            for (let i = 5; i < numSegments; i++) {
-                const posX = i * segmentWidth;
-
-                const maxShift = (levelNum === 3) ? 120 : (levelNum === 2 ? 90 : 60);
-                const shift = (Math.random() - 0.5) * maxShift;
-                currentCenter += shift;
-
-                const margin = halfGap + 80;
-                currentCenter = Math.max(margin, Math.min(canvas.height - margin, currentCenter));
-
-                terrainSegments.push({
-                    x: posX,
-                    topY: currentCenter - halfGap,
-                    bottomY: currentCenter + halfGap
-                });
-
-                // Generate Sawblades inside corridor
-                if (i > 8 && i < numSegments - 5) {
-                    const sawChance = levelNum === 3 ? 0.6 : (levelNum === 2 ? 0.4 : 0.2);
-                    if (Math.random() < sawChance) {
-                        const isTop = Math.random() < 0.5;
-                        sawblades.push({
-                            x: posX + segmentWidth / 2,
-                            y: isTop ? (currentCenter - halfGap + 30) : (currentCenter + halfGap - 30),
-                            radius: levelNum === 3 ? 24 : 20,
-                            angle: 0
-                        });
-                    }
-                }
-            }
+        if (this.ctx.state === 'suspended') {
+            this.ctx.resume();
         }
+    }
 
-        /**
-         * RESET & START COUNTDOWN BEFORE PLAYING
-         */
-        function prepareGame(levelNum) {
-            AudioSys.init();
-            currentLevel = levelNum;
-            generateLevel(levelNum);
+    playClick() {
+        if (!this.ctx) return;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(400, this.ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(800, this.ctx.currentTime + 0.05);
+        gain.gain.setValueAtTime(0.3, this.ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.05);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start();
+        osc.stop(this.ctx.currentTime + 0.05);
+    }
 
-            player.x = 200;
-            player.y = canvas.height / 2;
-            player.trail = [];
+    playBeep(high = false) {
+        if (!this.ctx) return;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(high ? 880 : 440, this.ctx.currentTime);
+        gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.15);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start();
+        osc.stop(this.ctx.currentTime + 0.15);
+    }
 
-            cameraX = 0;
-            isHolding = false;
+    playExplode() {
+        if (!this.ctx) return;
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(150, now);
+        osc.frequency.exponentialRampToValueAtTime(30, now + 0.3);
+        gain.gain.setValueAtTime(0.5, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start();
+        osc.stop(now + 0.3);
+    }
 
-            // Hide menus, show HUD
-            mainMenu.classList.add("hidden");
-            levelSelect.classList.add("hidden");
-            gameModal.classList.add("hidden");
-            gameHud.classList.remove("hidden");
-
-            hudLevelName.innerText = `MÀN ${levelNum}: ${config.name}`;
-            hudLevelName.style.color = config.themeColor;
-            progressBar.style.width = "0%";
-            progressText.innerText = "0%";
-
-            if (animationFrameId) cancelAnimationFrame(animationFrameId);
-            if (countdownTimer) clearInterval(countdownTimer);
-
-            startCountdown();
-        }
-
-        /**
-         * 3-SECOND COUNTDOWN LOGIC (3 -> 2 -> 1 -> GO!)
-         */
-        function startCountdown() {
-            gameState = "COUNTDOWN";
-            countdownOverlay.classList.remove("hidden");
-
-            let count = 3;
-            triggerCountdownAnimation(count);
-
-            countdownTimer = setInterval(() => {
-                count--;
-                if (count > 0) {
-                    triggerCountdownAnimation(count);
-                } else if (count === 0) {
-                    triggerCountdownAnimation("GO!");
-                } else {
-                    clearInterval(countdownTimer);
-                    countdownOverlay.classList.add("hidden");
-                    gameState = "PLAYING";
-                    gameLoop();
-                }
-            }, 900);
-
-            // Render scene while stationary during countdown
-            render();
-        }
-
-        function triggerCountdownAnimation(text) {
-            countdownText.innerText = text;
-            countdownText.classList.remove("animate-countdown");
-            void countdownText.offsetWidth; // Force reflow
-            countdownText.classList.add("animate-countdown");
-            
-            AudioSys.playBeep(text === "GO!");
-        }
-
-        /**
-         * INPUT LISTENERS
-         */
-        function handleInputStart(e) {
-            if (e.target.closest('button') || e.target.closest('.level-card')) return;
-            if (gameState === "PLAYING") {
-                isHolding = true;
-            }
-        }
-
-        function handleInputEnd() {
-            isHolding = false;
-        }
-
-        window.addEventListener("mousedown", handleInputStart);
-        window.addEventListener("mouseup", handleInputEnd);
-        window.addEventListener("touchstart", (e) => { handleInputStart(e); }, { passive: true });
-        window.addEventListener("touchend", handleInputEnd);
-
-        window.addEventListener("keydown", (e) => {
-            if (e.code === "Space" || e.code === "ArrowUp") {
-                if (gameState === "PLAYING") isHolding = true;
-            }
+    playWin() {
+        if (!this.ctx) return;
+        const notes = [523.25, 659.25, 783.99, 1046.50];
+        notes.forEach((freq, idx) => {
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = 'square';
+            osc.frequency.setValueAtTime(freq, this.ctx.currentTime + idx * 0.1);
+            gain.gain.setValueAtTime(0.15, this.ctx.currentTime + idx * 0.1);
+            gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + idx * 0.1 + 0.2);
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            osc.start(this.ctx.currentTime + idx * 0.1);
+            osc.stop(this.ctx.currentTime + idx * 0.1 + 0.2);
         });
-        window.addEventListener("keyup", (e) => {
-            if (e.code === "Space" || e.code === "ArrowUp") {
-                isHolding = false;
-            }
-        });
+    }
+}
 
-        /**
-         * COLLISION DETECTION LOGIC
-         */
-        function checkCollisions() {
-            const segmentWidth = 150;
-            const index = Math.floor(player.x / segmentWidth);
+const sounds = new SoundEffects();
 
-            if (index >= 0 && index < terrainSegments.length - 1) {
-                const segA = terrainSegments[index];
-                const segB = terrainSegments[index + 1];
+// --- GAME CONFIG & CONSTANTS ---
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const touchZone = document.getElementById('touchZone');
 
-                const factor = (player.x - segA.x) / segmentWidth;
-                const topLimitY = segA.topY + (segB.topY - segA.topY) * factor;
-                const bottomLimitY = segA.bottomY + (segB.bottomY - segA.bottomY) * factor;
+// Native Resolution Aspect Ratio (16:9)
+const GAME_WIDTH = 1280;
+const GAME_HEIGHT = 720;
 
-                if (player.y - player.size / 2 <= topLimitY || player.y + player.size / 2 >= bottomLimitY) {
-                    return true;
-                }
-            }
+let scale = 1;
+function resizeCanvas() {
+    const windowWidth = window.innerWidth;
+    const windowHeight = window.innerHeight;
+    
+    let w = windowWidth;
+    let h = windowWidth * (9 / 16);
+    
+    if (h > windowHeight) {
+        h = windowHeight;
+        w = windowHeight * (16 / 9);
+    }
+    
+    canvas.width = GAME_WIDTH;
+    canvas.height = GAME_HEIGHT;
+    canvas.style.width = `${w}px`;
+    canvas.style.height = `${h}px`;
+    scale = w / GAME_WIDTH;
+}
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
 
-            for (let saw of sawblades) {
-                const dx = player.x - saw.x;
-                const dy = player.y - saw.y;
-                const dist = Math.sqrt(dx * dx + dy * dy);
-                if (dist < saw.radius + player.size / 2) {
-                    return true;
-                }
-            }
+// Game States
+const STATE = {
+    MAIN_MENU: 0,
+    LEVEL_SELECT: 1,
+    COUNTDOWN: 2,
+    PLAYING: 3,
+    GAME_OVER: 4,
+    VICTORY: 5
+};
 
-            return false;
+let currentState = STATE.MAIN_MENU;
+let isHolding = false;
+let currentLevelIndex = 0;
+let levelProgress = 0;
+
+// Level Definitions
+const LEVELS = [
+    {
+        name: "STEREO MADNESS",
+        difficulty: "DỄ",
+        colorBg: "#001b44",
+        colorTheme: "#0077ff",
+        colorSecondary: "#00d4ff",
+        speed: 7,
+        length: 22000,
+        gapHeight: 280,
+        generateTerrain: function() {
+            return generateLevelMap(1, this.length, this.gapHeight);
         }
-
-        /**
-         * MAIN GAME LOOP
-         */
-        function gameLoop() {
-            if (gameState !== "PLAYING") return;
-
-            // 1. UPDATE STATE
-            player.x += config.speed;
-            const dy = config.speed * (isHolding ? -1 : 1); // Up 45° or Down 45°
-            player.y += dy;
-
-            cameraX = player.x - 200;
-
-            player.trail.unshift({ x: player.x, y: player.y });
-            if (player.trail.length > 35) player.trail.pop();
-
-            const progress = Math.min(100, Math.floor((player.x / config.length) * 100));
-            progressBar.style.width = `${progress}%`;
-            progressText.innerText = `${progress}%`;
-
-            if (player.x >= config.length) {
-                gameState = "WIN";
-                AudioSys.playWin();
-                showEndModal("CHIẾN THẮNG!", "Bạn đã vượt qua màn chơi xuất sắc!", "THẮNG RỒI!");
-                return;
-            }
-
-            if (checkCollisions()) {
-                gameState = "GAMEOVER";
-                AudioSys.playCrash();
-                showEndModal("THẤT BẠI!", "Bạn đã đâm vào chướng ngại vật.", "THUA RỒI!");
-                return;
-            }
-
-            // 2. RENDER GRAPHICS
-            render();
-
-            animationFrameId = requestAnimationFrame(gameLoop);
+    },
+    {
+        name: "BACK ON TRACK",
+        difficulty: "TRUNG BÌNH",
+        colorBg: "#003311",
+        colorTheme: "#00cc44",
+        colorSecondary: "#66ff88",
+        speed: 8.5,
+        length: 26000,
+        gapHeight: 220,
+        generateTerrain: function() {
+            return generateLevelMap(2, this.length, this.gapHeight);
         }
+    },
+    {
+        name: "DEMON WAVE",
+        difficulty: "KHÓ",
+        colorBg: "#33001a",
+        colorTheme: "#ff0055",
+        colorSecondary: "#ff6699",
+        speed: 10,
+        length: 36000, // Kéo dài Map 3
+        gapHeight: 250, // Nới rộng không gian cho mượt
+        generateTerrain: function() {
+            return generateLevelMap(3, this.length, this.gapHeight);
+        }
+    }
+];
 
-        /**
-         * RENDER GRAPHICS & VISUALS
-         */
-        function render() {
-            // Background Gradient
-            const grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
-            grad.addColorStop(0, config.bgGradient[0]);
-            grad.addColorStop(1, config.bgGradient[1]);
-            ctx.fillStyle = grad;
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            ctx.save();
-            ctx.translate(-cameraX, 0);
-
-            // Draw Grid
-            ctx.strokeStyle = config.gridColor;
-            ctx.lineWidth = 1;
-            const gridSize = 60;
-            const startX = Math.floor(cameraX / gridSize) * gridSize;
-            for (let x = startX; x < cameraX + canvas.width + gridSize; x += gridSize) {
-                ctx.beginPath();
-                ctx.moveTo(x, 0);
-                ctx.lineTo(x, canvas.height);
-                ctx.stroke();
+// Map Generator
+function generateLevelMap(levelNum, totalLength, baseGap) {
+    const terrain = [];
+    const spikes = [];
+    const sawblades = [];
+    
+    let x = 600;
+    let currentY = GAME_HEIGHT / 2;
+    
+    while (x < totalLength) {
+        let segLen = 400 + Math.random() * 500;
+        let gap = baseGap;
+        
+        if (levelNum === 3) {
+            // Map 3 chướng ngại vật phong phú
+            let type = Math.floor(Math.random() * 4);
+            if (type === 1) {
+                // Đỉnh uốn lượn
+                let targetY = 180 + Math.random() * (GAME_HEIGHT - 360);
+                terrain.push({ x1: x, y1: currentY, x2: x + segLen, y2: targetY, gap: gap });
+                currentY = targetY;
+            } else {
+                terrain.push({ x1: x, y1: currentY, x2: x + segLen, y2: currentY, gap: gap });
             }
-
-            // Draw Cavern Walls
-            if (terrainSegments.length > 0) {
-                ctx.fillStyle = "#080810";
-                ctx.strokeStyle = config.themeColor;
-                ctx.lineWidth = 4;
-
-                // Top Wall
-                ctx.beginPath();
-                ctx.moveTo(terrainSegments[0].x, 0);
-                for (let seg of terrainSegments) {
-                    ctx.lineTo(seg.x, seg.topY);
-                }
-                ctx.lineTo(terrainSegments[terrainSegments.length - 1].x, 0);
-                ctx.closePath();
-                ctx.fill();
-                ctx.stroke();
-
-                // Bottom Wall
-                ctx.beginPath();
-                ctx.moveTo(terrainSegments[0].x, canvas.height);
-                for (let seg of terrainSegments) {
-                    ctx.lineTo(seg.x, seg.bottomY);
-                }
-                ctx.lineTo(terrainSegments[terrainSegments.length - 1].x, canvas.height);
-                ctx.closePath();
-                ctx.fill();
-                ctx.stroke();
+            
+            // Thêm gai trên trần và sàn
+            if (Math.random() < 0.6) {
+                spikes.push({
+                    x: x + segLen * 0.5,
+                    y: currentY - gap/2 + 20,
+                    type: 'ceiling'
+                });
             }
+            if (Math.random() < 0.6) {
+                spikes.push({
+                    x: x + segLen * 0.5 + 80,
+                    y: currentY + gap/2 - 20,
+                    type: 'floor'
+                });
+            }
+            
+            // Thêm cưa xoay giữa đường ở Màn 3
+            if (Math.random() < 0.45) {
+                sawblades.push({
+                    x: x + segLen * 0.7,
+                    y: currentY + (Math.random() * 100 - 50),
+                    radius: 32
+                });
+            }
+        } else if (levelNum === 2) {
+            // Màn 2
+            let targetY = 200 + Math.random() * (GAME_HEIGHT - 400);
+            terrain.push({ x1: x, y1: currentY, x2: x + segLen, y2: targetY, gap: gap });
+            currentY = targetY;
 
-            // Draw Sawblades
-            sawblades.forEach(saw => {
-                if (saw.x + saw.radius > cameraX && saw.x - saw.radius < cameraX + canvas.width) {
-                    if (gameState === "PLAYING") saw.angle += 0.1;
-                    ctx.save();
-                    ctx.translate(saw.x, saw.y);
-                    ctx.rotate(saw.angle);
+            if (Math.random() < 0.4) {
+                spikes.push({
+                    x: x + segLen * 0.5,
+                    y: currentY + gap/2 - 20,
+                    type: 'floor'
+                });
+            }
+        } else {
+            // Màn 1 Dễ
+            let targetY = 220 + Math.random() * (GAME_HEIGHT - 440);
+            terrain.push({ x1: x, y1: currentY, x2: x + segLen, y2: targetY, gap: gap });
+            currentY = targetY;
+        }
+        
+        x += segLen;
+    }
+    
+    return { terrain, spikes, sawblades };
+}
 
-                    ctx.fillStyle = "#111";
-                    ctx.strokeStyle = "#ff3333";
-                    ctx.lineWidth = 3;
-                    ctx.beginPath();
-                    const teeth = 10;
-                    for (let i = 0; i < teeth; i++) {
-                        const a = (i / teeth) * Math.PI * 2;
-                        const r1 = saw.radius;
-                        const r2 = saw.radius * 0.6;
-                        ctx.lineTo(Math.cos(a) * r1, Math.sin(a) * r1);
-                        ctx.lineTo(Math.cos(a + 0.3) * r2, Math.sin(a + 0.3) * r2);
-                    }
-                    ctx.closePath();
-                    ctx.fill();
-                    ctx.stroke();
+// Wave Player
+const wave = {
+    x: 200,
+    y: GAME_HEIGHT / 2,
+    size: 16,
+    angle: 0,
+    trail: [],
+    particles: [],
+    
+    reset() {
+        this.x = 200;
+        this.y = GAME_HEIGHT / 2;
+        this.angle = 0;
+        this.trail = [{x: this.x, y: this.y}];
+        this.particles = [];
+    },
 
-                    ctx.beginPath();
-                    ctx.arc(0, 0, saw.radius * 0.3, 0, Math.PI * 2);
-                    ctx.fillStyle = "#fff";
-                    ctx.fill();
-
-                    ctx.restore();
-                }
+    update(speed) {
+        const vy = isHolding ? -speed : speed;
+        this.y += vy;
+        this.angle = isHolding ? -Math.PI / 4 : Math.PI / 4; // 45 độ chuẩn
+        
+        // Thêm đuôi Wave
+        this.trail.push({ x: this.x, y: this.y });
+        
+        // Hạt hiệu ứng
+        if (Math.random() < 0.6) {
+            this.particles.push({
+                x: this.x - 10,
+                y: this.y + (Math.random() * 10 - 5),
+                vx: -2 - Math.random() * 2,
+                vy: (Math.random() - 0.5) * 2,
+                size: 3 + Math.random() * 3,
+                life: 1.0,
+                color: LEVELS[currentLevelIndex].colorSecondary
             });
+        }
 
-            // Draw Wave Trail
-            if (player.trail.length > 1) {
-                ctx.beginPath();
-                ctx.moveTo(player.trail[0].x, player.trail[0].y);
-                for (let i = 1; i < player.trail.length; i++) {
-                    ctx.lineTo(player.trail[i].x, player.trail[i].y);
-                }
-                ctx.strokeStyle = config.waveColor;
-                ctx.lineWidth = 6;
-                ctx.lineCap = "round";
-                ctx.lineJoin = "round";
-                ctx.shadowColor = config.waveColor;
-                ctx.shadowBlur = 12;
-                ctx.stroke();
-                ctx.shadowBlur = 0;
-            }
+        // Cập nhật hạt
+        for (let i = this.particles.length - 1; i >= 0; i--) {
+            let p = this.particles[i];
+            p.x += p.vx;
+            p.y += p.vy;
+            p.life -= 0.04;
+            if (p.life <= 0) this.particles.splice(i, 1);
+        }
+    },
 
-            // Draw Wave Player Arrow
+    draw(ctx) {
+        // Vẽ vệt đuôi Zigzag
+        if (this.trail.length > 1) {
             ctx.save();
-            ctx.translate(player.x, player.y);
-            const angle = (gameState === "COUNTDOWN") ? 0 : (isHolding ? -Math.PI / 4 : Math.PI / 4);
-            ctx.rotate(angle);
-
-            ctx.fillStyle = "#ffffff";
-            ctx.strokeStyle = "#000000";
-            ctx.lineWidth = 2;
-
             ctx.beginPath();
-            ctx.moveTo(14, 0);
-            ctx.lineTo(-10, -10);
-            ctx.lineTo(-4, 0);
-            ctx.lineTo(-10, 10);
-            ctx.closePath();
-            ctx.fill();
+            ctx.moveTo(this.trail[0].x, this.trail[0].y);
+            for (let i = 1; i < this.trail.length; i++) {
+                ctx.lineTo(this.trail[i].x, this.trail[i].y);
+            }
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 6;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.shadowColor = LEVELS[currentLevelIndex].colorSecondary;
+            ctx.shadowBlur = 12;
             ctx.stroke();
-
-            ctx.fillStyle = config.waveColor;
-            ctx.beginPath();
-            ctx.moveTo(8, 0);
-            ctx.lineTo(-6, -5);
-            ctx.lineTo(-2, 0);
-            ctx.lineTo(-6, 5);
-            ctx.closePath();
-            ctx.fill();
-
-            ctx.restore();
             ctx.restore();
         }
 
-        /**
-         * SHOW GAMEOVER / WIN MODAL
-         */
-        function showEndModal(title, desc, statusText) {
-            document.getElementById("modal-title").innerText = statusText;
-            document.getElementById("modal-desc").innerText = desc;
-            gameModal.classList.remove("hidden");
+        // Vẽ hạt
+        this.particles.forEach(p => {
+            ctx.save();
+            ctx.globalAlpha = p.life;
+            ctx.fillStyle = p.color;
+            ctx.fillRect(p.x - p.size/2, p.y - p.size/2, p.size, p.size);
+            ctx.restore();
+        });
+
+        // Vẽ Con thoi Wave
+        ctx.save();
+        ctx.translate(this.x, this.y);
+        ctx.rotate(this.angle);
+        
+        // Outer Glow
+        ctx.shadowColor = LEVELS[currentLevelIndex].colorSecondary;
+        ctx.shadowBlur = 15;
+        
+        // Body (Dart Shape)
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.moveTo(18, 0);
+        ctx.lineTo(-12, -12);
+        ctx.lineTo(-6, 0);
+        ctx.lineTo(-12, 12);
+        ctx.closePath();
+        ctx.fill();
+
+        // Inner Accent
+        ctx.fillStyle = LEVELS[currentLevelIndex].colorTheme;
+        ctx.beginPath();
+        ctx.moveTo(10, 0);
+        ctx.lineTo(-6, -6);
+        ctx.lineTo(-2, 0);
+        ctx.lineTo(-6, 6);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.restore();
+    }
+};
+
+// Particles System khi nổ (Chết)
+let deathExplosion = [];
+function triggerExplosion(x, y) {
+    deathExplosion = [];
+    sounds.playExplode();
+    for (let i = 0; i < 40; i++) {
+        let ang = Math.random() * Math.PI * 2;
+        let spd = 3 + Math.random() * 9;
+        deathExplosion.push({
+            x: x,
+            y: y,
+            vx: Math.cos(ang) * spd,
+            vy: Math.sin(ang) * spd,
+            size: 4 + Math.random() * 8,
+            rot: Math.random() * Math.PI,
+            vrot: (Math.random() - 0.5) * 0.3,
+            life: 1.0,
+            color: Math.random() > 0.5 ? '#ffffff' : LEVELS[currentLevelIndex].colorTheme
+        });
+    }
+}
+
+// Countdown Variables
+let countdownValue = 3;
+let countdownTimer = null;
+
+function startCountdown() {
+    currentState = STATE.COUNTDOWN;
+    countdownValue = 3;
+    sounds.playBeep(false);
+    
+    if (countdownTimer) clearInterval(countdownTimer);
+    countdownTimer = setInterval(() => {
+        countdownValue--;
+        if (countdownValue > 0) {
+            sounds.playBeep(false);
+        } else if (countdownValue === 0) {
+            sounds.playBeep(true);
+        } else {
+            clearInterval(countdownTimer);
+            currentState = STATE.PLAYING;
+        }
+    }, 800);
+}
+
+// Current Level Data Storage
+let currentMapData = null;
+let cameraX = 0;
+
+function loadLevel(index) {
+    currentLevelIndex = index;
+    currentMapData = LEVELS[index].generateTerrain();
+    wave.reset();
+    cameraX = 0;
+    levelProgress = 0;
+    startCountdown();
+}
+
+// Global Animated Grid Background
+let bgOffset = 0;
+function drawBackground(ctx, level) {
+    const bgCol = level ? level.colorBg : "#00122e";
+    const gridCol = level ? level.colorTheme : "#0055ff";
+
+    ctx.fillStyle = bgCol;
+    ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+
+    // Dynamic Grid Lines
+    ctx.save();
+    ctx.strokeStyle = gridCol;
+    ctx.globalAlpha = 0.15;
+    ctx.lineWidth = 2;
+
+    const gridSize = 80;
+    bgOffset = (bgOffset + 0.5) % gridSize;
+
+    for (let x = -bgOffset; x < GAME_WIDTH; x += gridSize) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, GAME_HEIGHT);
+        ctx.stroke();
+    }
+    for (let y = 0; y < GAME_HEIGHT; y += gridSize) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(GAME_WIDTH, y);
+        ctx.stroke();
+    }
+    ctx.restore();
+}
+
+// --- COLLISION DETECTOR ---
+function checkCollisions() {
+    if (!currentMapData) return false;
+    
+    const wx = wave.x + cameraX;
+    const wy = wave.y;
+
+    // 1. Kiểm tra va chạm với Địa hình (Hành lang Ceiling/Floor)
+    let currentSegment = currentMapData.terrain.find(s => wx >= s.x1 && wx <= s.x2);
+    if (currentSegment) {
+        let progress = (wx - currentSegment.x1) / (currentSegment.x2 - currentSegment.x1);
+        let midY = currentSegment.y1 + progress * (currentSegment.y2 - currentSegment.y1);
+        let topY = midY - currentSegment.gap / 2;
+        let bottomY = midY + currentSegment.gap / 2;
+
+        if (wy - wave.size < topY || wy + wave.size > bottomY) {
+            return true;
+        }
+    } else if (wx > 600) {
+        // Ngoài map
+        return true;
+    }
+
+    // 2. Kiểm tra Va chạm Gai (Spikes)
+    for (let sp of currentMapData.spikes) {
+        let dx = Math.abs(wx - sp.x);
+        let dy = Math.abs(wy - sp.y);
+        if (dx < 22 && dy < 25) {
+            return true;
+        }
+    }
+
+    // 3. Kiểm tra Va chạm Cưa xoay (Sawblades)
+    for (let saw of currentMapData.sawblades) {
+        let dx = wx - saw.x;
+        let dy = wy - saw.y;
+        let dist = Math.sqrt(dx*dx + dy*dy);
+        if (dist < saw.radius + wave.size - 4) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+// --- DRAW TERRAIN & HAZARDS ---
+function drawTerrain(ctx) {
+    if (!currentMapData) return;
+    const level = LEVELS[currentLevelIndex];
+
+    ctx.save();
+    ctx.translate(-cameraX, 0);
+
+    // Draw Corridors
+    currentMapData.terrain.forEach(seg => {
+        if (seg.x2 < cameraX - 100 || seg.x1 > cameraX + GAME_WIDTH + 100) return;
+
+        let topY1 = seg.y1 - seg.gap / 2;
+        let topY2 = seg.y2 - seg.gap / 2;
+        let botY1 = seg.y1 + seg.gap / 2;
+        let botY2 = seg.y2 + seg.gap / 2;
+
+        // Ceilings (Trần nhà)
+        ctx.fillStyle = level.colorBg;
+        ctx.beginPath();
+        ctx.moveTo(seg.x1, 0);
+        ctx.lineTo(seg.x2, 0);
+        ctx.lineTo(seg.x2, topY2);
+        ctx.lineTo(seg.x1, topY1);
+        ctx.closePath();
+        ctx.fill();
+
+        // Ceilings Border
+        ctx.strokeStyle = level.colorTheme;
+        ctx.lineWidth = 4;
+        ctx.shadowColor = level.colorTheme;
+        ctx.shadowBlur = 10;
+        ctx.beginPath();
+        ctx.moveTo(seg.x1, topY1);
+        ctx.lineTo(seg.x2, topY2);
+        ctx.stroke();
+
+        // Floors (Sàn nhà)
+        ctx.beginPath();
+        ctx.moveTo(seg.x1, GAME_HEIGHT);
+        ctx.lineTo(seg.x2, GAME_HEIGHT);
+        ctx.lineTo(seg.x2, botY2);
+        ctx.lineTo(seg.x1, botY1);
+        ctx.closePath();
+        ctx.fill();
+
+        // Floors Border
+        ctx.beginPath();
+        ctx.moveTo(seg.x1, botY1);
+        ctx.lineTo(seg.x2, botY2);
+        ctx.stroke();
+    });
+
+    // Draw Spikes (Gai nhọn)
+    currentMapData.spikes.forEach(sp => {
+        if (sp.x < cameraX - 50 || sp.x > cameraX + GAME_WIDTH + 50) return;
+        ctx.save();
+        ctx.fillStyle = "#ff2200";
+        ctx.strokeStyle = "#ffffff";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        if (sp.type === 'ceiling') {
+            ctx.moveTo(sp.x - 18, sp.y - 20);
+            ctx.lineTo(sp.x + 18, sp.y - 20);
+            ctx.lineTo(sp.x, sp.y + 15);
+        } else {
+            ctx.moveTo(sp.x - 18, sp.y + 20);
+            ctx.lineTo(sp.x + 18, sp.y + 20);
+            ctx.lineTo(sp.x, sp.y - 15);
+        }
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        ctx.restore();
+    });
+
+    // Draw Sawblades (Bánh xe cưa)
+    let sawAngle = Date.now() * 0.005;
+    currentMapData.sawblades.forEach(saw => {
+        if (saw.x < cameraX - 100 || saw.x > cameraX + GAME_WIDTH + 100) return;
+        ctx.save();
+        ctx.translate(saw.x, saw.y);
+        ctx.rotate(sawAngle);
+
+        ctx.fillStyle = '#111';
+        ctx.strokeStyle = '#ff0055';
+        ctx.lineWidth = 4;
+        ctx.shadowColor = '#ff0055';
+        ctx.shadowBlur = 12;
+
+        ctx.beginPath();
+        const teeth = 8;
+        for (let i = 0; i < teeth; i++) {
+            let a1 = (i / teeth) * Math.PI * 2;
+            let a2 = ((i + 0.5) / teeth) * Math.PI * 2;
+            ctx.lineTo(Math.cos(a1) * saw.radius, Math.sin(a1) * saw.radius);
+            ctx.lineTo(Math.cos(a2) * (saw.radius - 10), Math.sin(a2) * (saw.radius - 10));
+        }
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = '#fff';
+        ctx.beginPath();
+        ctx.arc(0, 0, 6, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.restore();
+    });
+
+    ctx.restore();
+}
+
+// --- RENDER MAIN MENU (100% Giao diện chuẩn với duy nhất 1 nút Play ở giữa) ---
+function renderMainMenu() {
+    drawBackground(ctx, null);
+
+    // Title GD Text
+    ctx.save();
+    ctx.textAlign = 'center';
+    
+    // Main Logo Text "GEOMETRY DASH"
+    ctx.font = '900 78px "Arial Black", Impact, sans-serif';
+    ctx.fillStyle = '#000000';
+    ctx.fillText('GEOMETRY DASH', GAME_WIDTH / 2 + 5, 185);
+    
+    // Yellow-Green 3D Gradient
+    let grad = ctx.createLinearGradient(0, 100, 0, 190);
+    grad.addColorStop(0, '#ccff00');
+    grad.addColorStop(0.5, '#a2ff00');
+    grad.addColorStop(1, '#009900');
+    ctx.fillStyle = grad;
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 4;
+    ctx.fillText('GEOMETRY DASH', GAME_WIDTH / 2, 180);
+    ctx.strokeText('GEOMETRY DASH', GAME_WIDTH / 2, 180);
+
+    // Sub-banner "TRY ME!"
+    ctx.font = '900 32px "Arial Black", Impact, sans-serif';
+    ctx.fillStyle = '#ffff00';
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 3;
+    ctx.fillText('TRY ME!', GAME_WIDTH / 2 + 160, 235);
+    ctx.strokeText('TRY ME!', GAME_WIDTH / 2 + 160, 235);
+
+    // --- DUY NHẤT 1 NÚT PLAY TRUNG TÂM ---
+    const cx = GAME_WIDTH / 2;
+    const cy = GAME_HEIGHT / 2 + 50;
+    
+    ctx.shadowColor = 'rgba(0, 255, 100, 0.4)';
+    ctx.shadowBlur = 25;
+
+    // Green Plus Container
+    ctx.fillStyle = '#22cc33';
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 6;
+    
+    // Draw Green Cross Shape
+    ctx.beginPath();
+    ctx.roundRect(cx - 35, cy - 85, 70, 170, 10);
+    ctx.roundRect(cx - 85, cy - 35, 170, 70, 10);
+    ctx.fill();
+    ctx.stroke();
+
+    // Blue corner boxes
+    ctx.fillStyle = '#00cccc';
+    ctx.fillRect(cx - 75, cy - 75, 35, 35);
+    ctx.fillRect(cx + 40, cy - 75, 35, 35);
+    ctx.fillRect(cx - 75, cy + 40, 35, 35);
+    ctx.fillRect(cx + 40, cy + 40, 35, 35);
+
+    // Center Play Triangle (Yellow)
+    ctx.fillStyle = '#ffea00';
+    ctx.strokeStyle = '#000000';
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(cx - 20, cy - 35);
+    ctx.lineTo(cx + 35, cy);
+    ctx.lineTo(cx - 20, cy + 35);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.restore();
+}
+
+// --- RENDER LEVEL SELECT CAROUSEL ---
+function renderLevelSelect() {
+    const level = LEVELS[currentLevelIndex];
+    drawBackground(ctx, level);
+
+    ctx.save();
+    ctx.textAlign = 'center';
+
+    // Carousel Card Box
+    const cx = GAME_WIDTH / 2;
+    const cy = GAME_HEIGHT / 2;
+
+    ctx.fillStyle = 'rgba(0,0,0,0.6)';
+    ctx.strokeStyle = level.colorTheme;
+    ctx.lineWidth = 6;
+    ctx.shadowColor = level.colorTheme;
+    ctx.shadowBlur = 20;
+    ctx.roundRect(cx - 280, cy - 160, 560, 320, 20);
+    ctx.fill();
+    ctx.stroke();
+
+    // Title
+    ctx.font = '900 42px "Arial Black", Impact, sans-serif';
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText(level.name, cx, cy - 70);
+
+    // Difficulty
+    ctx.font = '700 28px sans-serif';
+    ctx.fillStyle = level.colorSecondary;
+    ctx.fillText(`ĐỘ KHÓ: ${level.difficulty}`, cx, cy - 10);
+
+    // Mode Tag
+    ctx.font = '600 22px sans-serif';
+    ctx.fillStyle = '#cccccc';
+    ctx.fillText('CHẾ ĐỘ: WAVE (CHẾ ĐỘ SÓNG 45°)', cx, cy + 40);
+
+    // Play Button on Level Card
+    ctx.fillStyle = '#22cc33';
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(cx, cy + 100, 35, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    // Yellow Triangle inside Play Button
+    ctx.fillStyle = '#ffea00';
+    ctx.beginPath();
+    ctx.moveTo(cx - 10, cy + 85);
+    ctx.lineTo(cx + 18, cy + 100);
+    ctx.lineTo(cx - 10, cy + 115);
+    ctx.closePath();
+    ctx.fill();
+
+    // Navigation Arrows (< and >)
+    ctx.font = '900 60px sans-serif';
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText('‹', cx - 330, cy + 20);
+    ctx.fillText('›', cx + 330, cy + 20);
+
+    // Back to Menu Button
+    ctx.font = '700 20px sans-serif';
+    ctx.fillStyle = '#aaaaaa';
+    ctx.fillText('QUAY LẠI [ESC]', cx, cy + 220);
+
+    ctx.restore();
+}
+
+// --- RENDER HUD (Progress Bar & Countdown) ---
+function renderHUD() {
+    const level = LEVELS[currentLevelIndex];
+
+    // Progress Bar Outer
+    ctx.save();
+    ctx.fillStyle = 'rgba(0,0,0,0.5)';
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 2;
+    ctx.fillRect(GAME_WIDTH / 2 - 200, 20, 400, 16);
+    ctx.strokeRect(GAME_WIDTH / 2 - 200, 20, 400, 16);
+
+    // Progress Bar Fill
+    ctx.fillStyle = level.colorTheme;
+    ctx.fillRect(GAME_WIDTH / 2 - 198, 22, (396 * levelProgress) / 100, 12);
+
+    // Progress Text
+    ctx.font = '700 16px sans-serif';
+    ctx.fillStyle = '#ffffff';
+    ctx.textAlign = 'center';
+    ctx.fillText(`${Math.floor(levelProgress)}%`, GAME_WIDTH / 2, 53);
+
+    // Render Countdown (3... 2... 1... GO!)
+    if (currentState === STATE.COUNTDOWN) {
+        ctx.textAlign = 'center';
+        ctx.font = '900 110px "Arial Black", Impact, sans-serif';
+        ctx.fillStyle = '#ffea00';
+        ctx.strokeStyle = '#000000';
+        ctx.lineWidth = 6;
+        
+        let text = countdownValue > 0 ? countdownValue : "GO!";
+        ctx.fillText(text, GAME_WIDTH / 2, GAME_HEIGHT / 2 + 35);
+        ctx.strokeText(text, GAME_WIDTH / 2, GAME_HEIGHT / 2 + 35);
+    }
+
+    ctx.restore();
+}
+
+// --- RENDER GAME OVER / VICTORY MODALS ---
+function renderEndScreens() {
+    ctx.save();
+    ctx.textAlign = 'center';
+
+    if (currentState === STATE.GAME_OVER) {
+        // Death Explosion Particles
+        deathExplosion.forEach(p => {
+            ctx.save();
+            ctx.translate(p.x - cameraX, p.y);
+            ctx.rotate(p.rot);
+            ctx.fillStyle = p.color;
+            ctx.fillRect(-p.size/2, -p.size/2, p.size, p.size);
+            ctx.restore();
+        });
+
+        // Banner
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+        ctx.fillRect(0, GAME_HEIGHT / 2 - 100, GAME_WIDTH, 200);
+
+        ctx.font = '900 64px "Arial Black", Impact, sans-serif';
+        ctx.fillStyle = '#ff2200';
+        ctx.strokeStyle = '#000';
+        ctx.lineWidth = 4;
+        ctx.fillText('THỬ LẠI!', GAME_WIDTH / 2, GAME_HEIGHT / 2 - 10);
+        ctx.strokeText('THỬ LẠI!', GAME_WIDTH / 2, GAME_HEIGHT / 2 - 10);
+
+        ctx.font = '700 24px sans-serif';
+        ctx.fillStyle = '#ffffff';
+        ctx.fillText('CHẠM HỎẶC BẤM SPACE ĐỂ CHƠI LẠI', GAME_WIDTH / 2, GAME_HEIGHT / 2 + 50);
+
+    } else if (currentState === STATE.VICTORY) {
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.75)';
+        ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+
+        ctx.font = '900 70px "Arial Black", Impact, sans-serif';
+        ctx.fillStyle = '#00ff66';
+        ctx.strokeStyle = '#000';
+        ctx.lineWidth = 5;
+        ctx.fillText('HOÀN THÀNH!', GAME_WIDTH / 2, GAME_HEIGHT / 2 - 30);
+        ctx.strokeText('HOÀN THÀNH!', GAME_WIDTH / 2, GAME_HEIGHT / 2 - 30);
+
+        ctx.font = '700 26px sans-serif';
+        ctx.fillStyle = '#ffffff';
+        ctx.fillText('CHÚC MỪNG BẠN ĐÃ VƯỢT QUA MÀN CHƠI!', GAME_WIDTH / 2, GAME_HEIGHT / 2 + 30);
+        ctx.fillText('CHẠM VÀO MÀN HÌNH ĐỂ VỀ MENU', GAME_WIDTH / 2, GAME_HEIGHT / 2 + 80);
+    }
+
+    ctx.restore();
+}
+
+// --- MAIN GAME LOOP ---
+function update() {
+    if (currentState === STATE.PLAYING) {
+        const level = LEVELS[currentLevelIndex];
+        
+        // Di chuyển camera và Wave
+        cameraX += level.speed;
+        wave.update(level.speed);
+
+        // Tính % hoàn thành
+        levelProgress = Math.min(100, (cameraX / level.length) * 100);
+
+        // Kiếm tra Va chạm (Chết)
+        if (checkCollisions()) {
+            currentState = STATE.GAME_OVER;
+            triggerExplosion(wave.x + cameraX, wave.y);
         }
 
-        /**
-         * UI NAVIGATION & EVENT BINDINGS
-         */
-        document.getElementById("btn-main-play").addEventListener("click", () => {
-            AudioSys.playClick();
-            mainMenu.classList.add("hidden");
-            levelSelect.classList.remove("hidden");
-            gameState = "LEVEL_SELECT";
-        });
-
-        document.getElementById("btn-back-main").addEventListener("click", () => {
-            AudioSys.playClick();
-            levelSelect.classList.add("hidden");
-            mainMenu.classList.remove("hidden");
-            gameState = "MENU";
-        });
-
-        function selectLevel(levelNum) {
-            AudioSys.playClick();
-            prepareGame(levelNum);
+        // Kiểm tra Chiến thắng
+        if (cameraX >= level.length) {
+            currentState = STATE.VICTORY;
+            sounds.playWin();
         }
-
-        document.getElementById("btn-restart").addEventListener("click", () => {
-            AudioSys.playClick();
-            prepareGame(currentLevel);
+    } else if (currentState === STATE.GAME_OVER) {
+        // Cập nhật mảnh vụn nổ
+        deathExplosion.forEach(p => {
+            p.x += p.vx;
+            p.y += p.vy;
+            p.rot += p.vrot;
         });
+    }
+}
 
-        document.getElementById("btn-menu").addEventListener("click", () => {
-            AudioSys.playClick();
-            gameModal.classList.add("hidden");
-            gameHud.classList.add("hidden");
-            countdownOverlay.classList.add("hidden");
-            levelSelect.classList.remove("hidden");
-            gameState = "LEVEL_SELECT";
-        });
+function render() {
+    ctx.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
 
-        // Initialize display
-        window.onload = function() {
-            generateLevel(1);
-            render();
-        };
-    </script>
+    if (currentState === STATE.MAIN_MENU) {
+        renderMainMenu();
+    } else if (currentState === STATE.LEVEL_SELECT) {
+        renderLevelSelect();
+    } else {
+        // COUNTDOWN, PLAYING, GAME_OVER, VICTORY
+        drawBackground(ctx, LEVELS[currentLevelIndex]);
+        drawTerrain(ctx);
+        if (currentState !== STATE.GAME_OVER) {
+            wave.draw(ctx);
+        }
+        renderHUD();
+        if (currentState === STATE.GAME_OVER || currentState === STATE.VICTORY) {
+            renderEndScreens();
+        }
+    }
+}
+
+function gameLoop() {
+    update();
+    render();
+    requestAnimationFrame(gameLoop);
+}
+
+// --- INPUT HANDLING ---
+function handlePress(e) {
+    sounds.init();
+
+    if (currentState === STATE.MAIN_MENU) {
+        // Bấm vào nút Play trung tâm
+        sounds.playClick();
+        currentState = STATE.LEVEL_SELECT;
+    } else if (currentState === STATE.LEVEL_SELECT) {
+        let rect = canvas.getBoundingClientRect();
+        let clickX = (e.clientX - rect.left) / scale;
+        let clickY = (e.clientY - rect.top) / scale;
+
+        const cx = GAME_WIDTH / 2;
+        const cy = GAME_HEIGHT / 2;
+
+        // Bấm Nút Trái (<)
+        if (clickX < cx - 200) {
+            sounds.playClick();
+            currentLevelIndex = (currentLevelIndex - 1 + LEVELS.length) % LEVELS.length;
+        } 
+        // Bấm Nút Phải (>)
+        else if (clickX > cx + 200) {
+            sounds.playClick();
+            currentLevelIndex = (currentLevelIndex + 1) % LEVELS.length;
+        } 
+        // Bấm Nút Play ở giữa màn chọn
+        else {
+            sounds.playClick();
+            loadLevel(currentLevelIndex);
+        }
+    } else if (currentState === STATE.COUNTDOWN || currentState === STATE.PLAYING) {
+        isHolding = true;
+    } else if (currentState === STATE.GAME_OVER) {
+        // Retry lại màn chơi
+        sounds.playClick();
+        loadLevel(currentLevelIndex);
+    } else if (currentState === STATE.VICTORY) {
+        // Quay lại màn hình chọn level
+        sounds.playClick();
+        currentState = STATE.LEVEL_SELECT;
+    }
+}
+
+function handleRelease() {
+    isHolding = false;
+}
+
+// Event Listeners
+touchZone.addEventListener('mousedown', (e) => handlePress(e));
+touchZone.addEventListener('mouseup', handleRelease);
+touchZone.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    handlePress(e.touches[0]);
+});
+touchZone.addEventListener('touchend', (e) => {
+    e.preventDefault();
+    handleRelease();
+});
+
+window.addEventListener('keydown', (e) => {
+    if (e.code === 'Space' || e.code === 'ArrowUp') {
+        if (!isHolding) handlePress({ clientX: window.innerWidth/2, clientY: window.innerHeight/2 });
+    } else if (e.code === 'Escape') {
+        if (currentState === STATE.LEVEL_SELECT) {
+            currentState = STATE.MAIN_MENU;
+        } else if (currentState === STATE.PLAYING || currentState === STATE.COUNTDOWN) {
+            currentState = STATE.LEVEL_SELECT;
+        }
+    }
+});
+
+window.addEventListener('keyup', (e) => {
+    if (e.code === 'Space' || e.code === 'ArrowUp') {
+        handleRelease();
+    }
+});
+
+// Chạy Game
+gameLoop();
+</script>
 </body>
 </html>
