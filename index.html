@@ -54,9 +54,7 @@
 </div>
 
 <script>
-// --- BACKGROUND MUSIC CHO GITHUB PAGES ---
-// Đảm bảo file "nukebgm.mp3" viết đúng chính xác từng ký tự (thường viết thường hết)
-// và nằm cùng cấp với file index.html trên GitHub kho lưu trữ của bạn.
+// --- BACKGROUND MUSIC CONFIG ---
 const bgMusic = new Audio('nukebgm.mp3');
 bgMusic.loop = true;
 bgMusic.volume = 0.5;
@@ -441,12 +439,19 @@ let countdownValue = 3;
 let countdownTimer = null;
 
 function startCountdown() {
+    stopBGM(); // Đảm bảo sạch sẽ khi khởi động đếm ngược
     currentState = STATE.COUNTDOWN;
     countdownValue = 3;
     sounds.playBeep(false);
     
     if (countdownTimer) clearInterval(countdownTimer);
     countdownTimer = setInterval(() => {
+        // Nếu người chơi bấm ESC trong lúc đếm ngược, hủy ngay tiến trình
+        if (currentState !== STATE.COUNTDOWN) {
+            clearInterval(countdownTimer);
+            return;
+        }
+
         countdownValue--;
         if (countdownValue > 0) {
             sounds.playBeep(false);
@@ -454,8 +459,10 @@ function startCountdown() {
             sounds.playBeep(true);
         } else {
             clearInterval(countdownTimer);
-            currentState = STATE.PLAYING;
-            playBGM(); // Phát nhạc ngay khi bắt đầu màn chơi
+            if (currentState === STATE.COUNTDOWN) {
+                currentState = STATE.PLAYING;
+                playBGM(); // NHẠC CHỈ CẤT LÊN KHI CHÍNH THỨC BẮT ĐẦU CHƠI (SAU 3-2-1-GO!)
+            }
         }
     }, 800);
 }
@@ -907,7 +914,8 @@ function gameLoop() {
 
 function handlePress(e) {
     sounds.init();
-    playBGM(); // Kích hoạt phát nhạc khi có tương tác đầu tiên
+    // Chú ý: Ở đây không gọi playBGM() chung chung nữa để đảm bảo Menu không có nhạc.
+    // Nhạc chỉ được gọi chuẩn xác bên trong startCountdown() khi màn chơi chính thức bắt đầu.
 
     if (currentState === STATE.MAIN_MENU) {
         sounds.playClick();
@@ -958,10 +966,12 @@ window.addEventListener('keydown', (e) => {
     if (e.code === 'Space' || e.code === 'ArrowUp') {
         if (!isHolding) handlePress({ clientX: window.innerWidth/2, clientY: window.innerHeight/2 });
     } else if (e.code === 'Escape') {
+        // Bấm ESC dừng toàn bộ hành động và dừng nhạc, đưa về màn hình chọn màn
+        stopBGM();
+        isHolding = false;
         if (currentState === STATE.LEVEL_SELECT) {
             currentState = STATE.MAIN_MENU;
-        } else if (currentState === STATE.PLAYING || currentState === STATE.COUNTDOWN) {
-            stopBGM();
+        } else {
             currentState = STATE.LEVEL_SELECT;
         }
     }
