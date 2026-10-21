@@ -213,8 +213,8 @@ const LEVELS = [
         colorTheme: "#ff0033",
         colorSecondary: "#ff6688",
         speed: 10,
-        length: 38000, // Bản đồ kéo dài
-        gapHeight: 280, // Mở rộng địa hình thoải mái
+        length: 38000, // Long map
+        gapHeight: 280, // Extended corridor space
         generateTerrain: function() {
             return generateLevelMap(3, this.length, this.gapHeight);
         }
@@ -243,7 +243,7 @@ function generateLevelMap(levelNum, totalLength, baseGap) {
                 terrain.push({ x1: x, y1: currentY, x2: x + segLen, y2: currentY, gap: gap });
             }
             
-            // Gai nhọn bám trần/sàn
+            // Ceiling and Floor Spikes
             if (Math.random() < 0.65) {
                 spikes.push({
                     x: x + segLen * 0.4,
@@ -259,7 +259,7 @@ function generateLevelMap(levelNum, totalLength, baseGap) {
                 });
             }
             
-            // Bánh xe cưa xoay
+            // Spinning Sawblades
             if (Math.random() < 0.5) {
                 sawblades.push({
                     x: x + segLen * 0.5,
@@ -309,7 +309,7 @@ const wave = {
     },
 
     update(speed) {
-        // Chuyển động chéo 45 độ: vy = speed
+        // Precise 45-degree angle diagonal movement: vy = speed
         const vy = isHolding ? -speed : speed;
         this.y += vy;
         this.angle = isHolding ? -Math.PI / 4 : Math.PI / 4;
@@ -653,7 +653,7 @@ function renderMainMenu() {
     ctx.fillText('TRY ME!', GAME_WIDTH / 2 + 160, 235);
     ctx.strokeText('TRY ME!', GAME_WIDTH / 2 + 160, 235);
 
-    // Nút Play duy nhất
+    // Single Center Play Button
     const cx = GAME_WIDTH / 2;
     const cy = GAME_HEIGHT / 2 + 50;
     
