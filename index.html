@@ -54,7 +54,25 @@
 </div>
 
 <script>
-// --- SOUND ENGINE (Web Audio API) ---
+// --- BACKGROUND MUSIC (Phát file bgm.mp4 cùng thư mục) ---
+const bgMusic = new Audio('bgm.mp4');
+bgMusic.loop = true;
+bgMusic.volume = 0.5;
+
+function playBGM() {
+    if (bgMusic.paused) {
+        bgMusic.play().catch(err => {
+            console.log("Cần người dùng tương tác để phát nhạc MP4:", err);
+        });
+    }
+}
+
+function stopBGM() {
+    bgMusic.pause();
+    bgMusic.currentTime = 0;
+}
+
+// --- SOUND EFFECTS SYNTHESIZER (Web Audio API) ---
 class SoundEffects {
     constructor() {
         this.ctx = null;
@@ -134,7 +152,7 @@ class SoundEffects {
 
 const sounds = new SoundEffects();
 
-// --- CONFIG & CONSTANTS ---
+// --- CONFIG & CANVAS RESIZING ---
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 const touchZone = document.getElementById('touchZone');
@@ -289,7 +307,7 @@ function generateLevelMap(levelNum, totalLength, baseGap) {
     return { terrain, spikes, sawblades };
 }
 
-// Wave Entity & Physics
+// Wave Physics (Exact 45 Degree Angle Movement)
 const wave = {
     x: 220,
     y: GAME_HEIGHT / 2,
@@ -307,6 +325,7 @@ const wave = {
     },
 
     update(speed) {
+        // vy = speed => Chuyển động chéo 45 độ chuẩn xác
         const vy = isHolding ? -speed : speed;
         this.y += vy;
         this.angle = isHolding ? -Math.PI / 4 : Math.PI / 4;
@@ -435,6 +454,7 @@ function startCountdown() {
         } else {
             clearInterval(countdownTimer);
             currentState = STATE.PLAYING;
+            playBGM(); // Bắt đầu phát nhạc mp4 khi hết đếm ngược
         }
     }, 800);
 }
@@ -840,11 +860,13 @@ function update() {
 
         if (checkCollisions()) {
             currentState = STATE.GAME_OVER;
+            stopBGM(); // Dừng nhạc MP4 khi va chạm
             triggerExplosion(wave.x + cameraX, wave.y);
         }
 
         if (cameraX >= level.length) {
             currentState = STATE.VICTORY;
+            stopBGM(); // Dừng nhạc MP4 khi chiến thắng
             sounds.playWin();
         }
     } else if (currentState === STATE.GAME_OVER) {
@@ -884,6 +906,7 @@ function gameLoop() {
 
 function handlePress(e) {
     sounds.init();
+    playBGM(); // Kích hoạt nhạc khi tương tác
 
     if (currentState === STATE.MAIN_MENU) {
         sounds.playClick();
@@ -937,6 +960,7 @@ window.addEventListener('keydown', (e) => {
         if (currentState === STATE.LEVEL_SELECT) {
             currentState = STATE.MAIN_MENU;
         } else if (currentState === STATE.PLAYING || currentState === STATE.COUNTDOWN) {
+            stopBGM();
             currentState = STATE.LEVEL_SELECT;
         }
     }
