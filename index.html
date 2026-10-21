@@ -289,7 +289,7 @@ function generateLevelMap(levelNum, totalLength, baseGap) {
     return { terrain, spikes, sawblades };
 }
 
-// Exact 45-degree Wave Physics
+// Wave Entity & Physics
 const wave = {
     x: 220,
     y: GAME_HEIGHT / 2,
@@ -307,18 +307,24 @@ const wave = {
     },
 
     update(speed) {
-        // vy = speed => Exact 45° angle physics
         const vy = isHolding ? -speed : speed;
         this.y += vy;
         this.angle = isHolding ? -Math.PI / 4 : Math.PI / 4;
         
+        for (let i = 0; i < this.trail.length; i++) {
+            this.trail[i].x -= speed;
+        }
         this.trail.push({ x: this.x, y: this.y });
         
+        if (this.trail.length > 300) {
+            this.trail.shift();
+        }
+
         if (Math.random() < 0.7) {
             this.particles.push({
                 x: this.x - 10,
                 y: this.y + (Math.random() * 8 - 4),
-                vx: -2 - Math.random() * 2,
+                vx: -speed - 2 - Math.random() * 2,
                 vy: (Math.random() - 0.5) * 2,
                 size: 3 + Math.random() * 3,
                 life: 1.0,
